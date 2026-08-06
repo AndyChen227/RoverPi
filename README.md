@@ -223,6 +223,16 @@ Potential additions include distance sensors, an IMU, and other modules selected
 - Path planning and obstacle avoidance
 - Autonomous navigation experiments
 
+## 📝 Development Log
+
+Each meaningful build session is recorded in `docs/devlog/` with completed work, current state, photographs, safety notes, and next steps.
+
+### Latest entry — August 6, 2026
+
+Installed the four motors and wheels, battery, motor driver, and inline fuse on the aluminum chassis. The red and white motor leads were connected to the motor-driver outputs. Power-on and movement testing have not yet been completed.
+
+➡️ **[Read the full bilingual development log](docs/devlog/2026-08-06.md)**
+
 ## 📸 Build Journal
 
 Development photos will be stored in `photos/` and grouped by milestone—for example chassis assembly, power system, electronics installation, first movement, encoder testing, and future sensor upgrades.
@@ -449,6 +459,16 @@ flowchart LR
 - 地图构建与 SLAM
 - 路径规划与避障
 - 自主导航实验
+
+## 📝 开发日志
+
+每一次有实际进展的制作过程都会记录在 `docs/devlog/` 中，包括当天完成的工作、当前状态、项目照片、安全提醒和下一步计划。
+
+### 最新记录 — 2026 年 8 月 6 日
+
+今天完成了四个电机与轮胎、电池、电机驱动板和串联保险丝在铝合金底盘上的安装，并将电机红白两根动力线接入驱动板输出端。目前尚未完成通电与移动测试。
+
+➡️ **[查看完整的中英双语开发日志](docs/devlog/2026-08-06.md)**
 
 ## 📸 成长相册
 
