@@ -47,8 +47,9 @@ Before adding advanced sensors or autonomy, the power system, motor driver, GPIO
 | Mechanical chassis | ✅ Assembled | Four-wheel, two-level aluminum chassis |
 | Project repository | ✅ Ready | Organized structure for code, documentation, photos, and notes |
 | Power distribution | 🔨 In progress | Motor battery path installed; Pi uses a dedicated USB power bank |
-| Motor driver integration | 🔨 In progress | Pi-to-driver control wiring connected; powered validation pending |
-| Basic movement | ⏳ Next milestone | Forward, backward, turning, and stop |
+| Motor driver integration | 🔨 In progress | Channel 1 verified on the two left-side motors; Channel 2 pending |
+| Basic movement | 🔨 In progress | Left-side motors moved and stopped under Pi control; full-rover movement pending |
+| Gamepad input | 🔨 In progress | DualSense Bluetooth and Linux/Python input recognized; driving control not implemented |
 | Encoder feedback | 🗓️ Planned | Wheel speed, direction, and distance measurement |
 | Sensors and autonomy | 🗓️ Future | Added only after the base rover is dependable |
 
@@ -229,11 +230,11 @@ Potential additions include distance sensors, an IMU, and other modules selected
 
 Each meaningful build session is recorded in `docs/devlog/` with completed work, current state, photographs, safety notes, and next steps.
 
-### Latest entry — August 7–8, 2026
+### Latest entry — August 9, 2026
 
-Upgraded RoverPi to a two-level chassis, mounted the Raspberry Pi 5 and its dedicated USB power bank on the upper deck, and connected the Pi-to-motor-driver control wiring. These are completed installation steps; power-on and motor-movement validation are still pending.
+Verified motor-driver Channel 1 on the two left-side motors at 30% PWM with a controlled stop after about 1 second. Also paired, trusted, and connected a PS5 DualSense controller and validated its Linux/Python input devices and left-stick axes. Right-side motors, full-rover movement, and gamepad-controlled driving remain pending.
 
-➡️ **[Read the full bilingual development log](docs/devlog/2026-08-07-08.md)**
+➡️ **[Read the full bilingual development log](docs/devlog/2026-08-09.md)**
 
 ## 📸 Build Journal
 
@@ -286,8 +287,9 @@ This creates a visual engineering journal showing how RoverPi evolves over time.
 | 机械底盘 | ✅ 已完成 | 四轮双层铝合金底盘 |
 | 项目仓库 | ✅ 已完成 | 已建立代码、文档、照片和笔记结构 |
 | 电源分配 | 🔨 进行中 | 电机电池线路已安装；树莓派使用独立 USB 充电宝 |
-| 电机驱动集成 | 🔨 进行中 | 树莓派至驱动板控制线已连接；等待通电验证 |
-| 基础移动 | ⏳ 下一里程碑 | 前进、后退、转向和停止 |
+| 电机驱动集成 | 🔨 进行中 | 已验证 Channel 1 控制左侧两个电机；Channel 2 待验证 |
+| 基础移动 | 🔨 进行中 | 左侧电机已在树莓派控制下转动并停止；整车移动待验证 |
+| 手柄输入 | 🔨 进行中 | 已识别 DualSense 蓝牙及 Linux/Python 输入；尚未实现行驶控制 |
 | 编码器反馈 | 🗓️ 已规划 | 测量轮速、方向和距离 |
 | 传感器与自主功能 | 🗓️ 未来计划 | 基础小车可靠后再逐步加入 |
 
@@ -468,11 +470,11 @@ flowchart LR
 
 每一次有实际进展的制作过程都会记录在 `docs/devlog/` 中，包括当天完成的工作、当前状态、项目照片、安全提醒和下一步计划。
 
-### 最新记录 — 2026 年 8 月 7–8 日
+### 最新记录 — 2026 年 8 月 9 日
 
-这两天将 RoverPi 升级为双层底盘，把 Raspberry Pi 5 和独立 USB 充电宝安装到上层平台，并连接了树莓派至电机驱动板的控制线。这些安装步骤已经完成，但尚未完成通电与电机移动验证。
+已在 30% PWM 下验证电机驱动板 Channel 1 控制左侧两个电机，并在约 1 秒后受控停止。同时完成 PS5 DualSense 手柄的蓝牙配对、信任和连接，并验证 Linux/Python 输入设备及左摇杆轴。右侧电机、整车移动和手柄控制行驶仍待完成。
 
-➡️ **[查看完整的中英双语开发日志](docs/devlog/2026-08-07-08.md)**
+➡️ **[查看完整的中英双语开发日志](docs/devlog/2026-08-09.md)**
 
 ## 📸 成长相册
 
