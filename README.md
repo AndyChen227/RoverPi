@@ -9,7 +9,7 @@
 **从第一次移动开始，一步一步走向自主导航。**
 
 ![Project Status](https://img.shields.io/badge/status-in%20development-f5a623?style=for-the-badge)
-![Current Phase](https://img.shields.io/badge/current%20phase-basic%20movement-2ea44f?style=for-the-badge)
+![Current Phase](https://img.shields.io/badge/current%20phase-hardware%20integration-f5a623?style=for-the-badge)
 ![Platform](https://img.shields.io/badge/platform-Raspberry%20Pi%205-c51a4a?style=for-the-badge&logo=raspberrypi&logoColor=white)
 ![Language](https://img.shields.io/badge/language-Python-3776ab?style=for-the-badge&logo=python&logoColor=white)
 
@@ -46,8 +46,8 @@ Before adding advanced sensors or autonomy, the power system, motor driver, GPIO
 |---|---:|---|
 | Mechanical chassis | ✅ Assembled | Four-wheel, two-level aluminum chassis |
 | Project repository | ✅ Ready | Organized structure for code, documentation, photos, and notes |
-| Power distribution | 🔨 In progress | Battery protection, regulation, switching, and wiring |
-| Motor driver integration | 🔨 In progress | Raspberry Pi control signals and motor outputs |
+| Power distribution | 🔨 In progress | Motor battery path installed; Pi uses a dedicated USB power bank |
+| Motor driver integration | 🔨 In progress | Pi-to-driver control wiring connected; powered validation pending |
 | Basic movement | ⏳ Next milestone | Forward, backward, turning, and stop |
 | Encoder feedback | 🗓️ Planned | Wheel speed, direction, and distance measurement |
 | Sensors and autonomy | 🗓️ Future | Added only after the base rover is dependable |
@@ -61,8 +61,7 @@ flowchart LR
     B["3S LiPo Battery<br/>11.1 V, 5200 mAh"] --> F["Fuse"]
     F --> S["Main Power Switch"]
     S --> D["Dual-Channel Motor Driver"]
-    S --> C["5 V High-Current<br/>Buck Converter"]
-    C --> P["Raspberry Pi 5"]
+    U["Dedicated USB Power Bank"] --> P["Raspberry Pi 5"]
     P -->|"PWM + Direction"| D
     D --> M1["Left Motors"]
     D --> M2["Right Motors"]
@@ -71,7 +70,7 @@ flowchart LR
 ```
 
 > [!CAUTION]
-> Never connect the 11.1 V LiPo battery directly to the Raspberry Pi 5. The Pi requires a stable regulated 5 V supply with sufficient current capacity. The Raspberry Pi and motor driver must also share a proper signal ground.
+> Never connect the 11.1 V LiPo battery directly to the Raspberry Pi 5. The Pi is currently powered by a dedicated USB power bank on the upper deck. Before powered testing, verify the motor-driver control-interface ground/reference requirements against its documentation.
 
 ## 🔩 Core Hardware
 
@@ -85,7 +84,9 @@ flowchart LR
 | Wheels | 4 × 65 mm high-friction wheels | Ground contact and traction |
 | Motor driver | WHEELTEC MOS high-current dual-channel driver | Drives the motors from low-power control signals |
 | Battery | G-Tech 3S LiPo, 11.1 V, 5200 mAh, 50C | Main rover power source |
-| Battery connector | XT60 | Main power connection |
+| Battery connector | XT60 | Main motor-power connection |
+| Pi power source | Dedicated USB power bank | Independent mobile power for the Raspberry Pi 5 |
+| Upper deck | Standoffs and second aluminum level | Mounts the Raspberry Pi 5 and its power bank |
 
 Supporting parts include a fuse and fuse holder, main power switch, high-current wire, motor and encoder extension cables, GPIO wiring, heat-shrink tubing, cable ties, standoffs, screws, and a suitable 3S LiPo balance charger.
 
@@ -178,7 +179,8 @@ flowchart LR
 ### Phase 1 — Basic Movement 🔨
 
 - Build a protected power-distribution path
-- Install the Raspberry Pi and motor driver
+- Install the Raspberry Pi and motor driver ✅
+- Connect the Raspberry Pi-to-driver control wiring ✅
 - Test one motor at a time
 - Connect and verify all four motors
 - Implement forward, backward, left, right, and stop
@@ -227,11 +229,11 @@ Potential additions include distance sensors, an IMU, and other modules selected
 
 Each meaningful build session is recorded in `docs/devlog/` with completed work, current state, photographs, safety notes, and next steps.
 
-### Latest entry — August 6, 2026
+### Latest entry — August 7–8, 2026
 
-Installed the four motors and wheels, battery, motor driver, and inline fuse on the aluminum chassis. The red and white motor leads were connected to the motor-driver outputs. Power-on and movement testing have not yet been completed.
+Upgraded RoverPi to a two-level chassis, mounted the Raspberry Pi 5 and its dedicated USB power bank on the upper deck, and connected the Pi-to-motor-driver control wiring. These are completed installation steps; power-on and motor-movement validation are still pending.
 
-➡️ **[Read the full bilingual development log](docs/devlog/2026-08-06.md)**
+➡️ **[Read the full bilingual development log](docs/devlog/2026-08-07-08.md)**
 
 ## 📸 Build Journal
 
@@ -283,8 +285,8 @@ This creates a visual engineering journal showing how RoverPi evolves over time.
 |---|---:|---|
 | 机械底盘 | ✅ 已完成 | 四轮双层铝合金底盘 |
 | 项目仓库 | ✅ 已完成 | 已建立代码、文档、照片和笔记结构 |
-| 电源分配 | 🔨 进行中 | 电池保护、稳压、开关和接线 |
-| 电机驱动集成 | 🔨 进行中 | Raspberry Pi 控制信号和电机输出 |
+| 电源分配 | 🔨 进行中 | 电机电池线路已安装；树莓派使用独立 USB 充电宝 |
+| 电机驱动集成 | 🔨 进行中 | 树莓派至驱动板控制线已连接；等待通电验证 |
 | 基础移动 | ⏳ 下一里程碑 | 前进、后退、转向和停止 |
 | 编码器反馈 | 🗓️ 已规划 | 测量轮速、方向和距离 |
 | 传感器与自主功能 | 🗓️ 未来计划 | 基础小车可靠后再逐步加入 |
@@ -298,8 +300,7 @@ flowchart LR
     B["3S LiPo 电池<br/>11.1 V，5200 mAh"] --> F["保险丝"]
     F --> S["总电源开关"]
     S --> D["双路大电流电机驱动板"]
-    S --> C["5 V 大电流<br/>降压模块"]
-    C --> P["Raspberry Pi 5"]
+    U["独立 USB 充电宝"] --> P["Raspberry Pi 5"]
     P -->|"PWM + 方向信号"| D
     D --> M1["左侧电机"]
     D --> M2["右侧电机"]
@@ -308,7 +309,7 @@ flowchart LR
 ```
 
 > [!CAUTION]
-> 绝对不能把 11.1 V LiPo 电池直接连接到 Raspberry Pi 5。树莓派需要电流余量充足、稳定的 5 V 稳压电源。Raspberry Pi 与电机驱动板之间也必须正确共地。
+> 绝对不能把 11.1 V LiPo 电池直接连接到 Raspberry Pi 5。目前树莓派由上层平台上的独立 USB 充电宝供电。通电测试前，应依据驱动板资料确认控制接口所需的地线/参考地连接。
 
 ## 🔩 核心硬件
 
@@ -322,7 +323,9 @@ flowchart LR
 | 轮胎 | 4 × 65 mm 高摩擦轮 | 接触地面并提供抓地力 |
 | 电机驱动 | WHEELTEC MOS 大电流双路驱动板 | 通过低功率信号驱动电机 |
 | 电池 | G-Tech 3S LiPo，11.1 V、5200 mAh、50C | 小车主动力电源 |
-| 电池接口 | XT60 | 主电源连接 |
+| 电池接口 | XT60 | 电机主电源连接 |
+| 树莓派电源 | 独立 USB 充电宝 | 为 Raspberry Pi 5 提供独立移动电源 |
+| 上层平台 | 铜柱与第二层铝板 | 安装 Raspberry Pi 5 及其充电宝 |
 
 辅助配件包括保险丝与保险丝座、总电源开关、大电流电源线、电机与编码器延长线、GPIO 连接线、热缩管、扎带、铜柱、螺丝以及合适的 3S LiPo 平衡充电器。
 
@@ -415,7 +418,8 @@ flowchart LR
 ### 阶段 1 — 基础移动 🔨
 
 - 建立带保护的电源分配线路
-- 安装 Raspberry Pi 和电机驱动板
+- 安装 Raspberry Pi 和电机驱动板 ✅
+- 连接 Raspberry Pi 至驱动板的控制线 ✅
 - 逐个测试电机
 - 连接并验证全部四个电机
 - 实现前进、后退、左转、右转和停止
@@ -464,11 +468,11 @@ flowchart LR
 
 每一次有实际进展的制作过程都会记录在 `docs/devlog/` 中，包括当天完成的工作、当前状态、项目照片、安全提醒和下一步计划。
 
-### 最新记录 — 2026 年 8 月 6 日
+### 最新记录 — 2026 年 8 月 7–8 日
 
-今天完成了四个电机与轮胎、电池、电机驱动板和串联保险丝在铝合金底盘上的安装，并将电机红白两根动力线接入驱动板输出端。目前尚未完成通电与移动测试。
+这两天将 RoverPi 升级为双层底盘，把 Raspberry Pi 5 和独立 USB 充电宝安装到上层平台，并连接了树莓派至电机驱动板的控制线。这些安装步骤已经完成，但尚未完成通电与电机移动验证。
 
-➡️ **[查看完整的中英双语开发日志](docs/devlog/2026-08-06.md)**
+➡️ **[查看完整的中英双语开发日志](docs/devlog/2026-08-07-08.md)**
 
 ## 📸 成长相册
 
