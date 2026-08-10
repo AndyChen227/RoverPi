@@ -1,51 +1,50 @@
 # Setup Notes / 设置说明
 
-[English](#english) · [中文](#中文)
+## Required Python packages
 
----
+The current tests use `gpiozero` for GPIO output and `evdev` for DualSense input. The Linux joystick tools provide `jstest` for independent controller inspection.
 
-<a id="english"></a>
+## Reconnect the DualSense / 重新连接 DualSense
 
-## English
+1. Put the controller into pairing/connection mode if necessary.
+2. Start `bluetoothctl`.
+3. Run `power on`, `agent on`, and `default-agent`.
+4. Use `devices` or `paired-devices` to find the controller without publishing a private MAC address in this repository.
+5. Run `trust <controller-address>` and `connect <controller-address>`.
+6. Run `info <controller-address>` and confirm `Paired: yes`, `Trusted: yes`, and `Connected: yes`.
+7. Exit `bluetoothctl`.
 
-### DualSense validation environment
+如有需要，先让手柄进入配对状态，再在 `bluetoothctl` 中打开电源与 agent，通过 `devices` 找到手柄地址，执行 `trust`、`connect`，最后用 `info` 确认已配对、已信任且已连接。本仓库不记录私人设备 MAC 地址。
 
-The PS5 DualSense Wireless Controller was paired, trusted, and connected through Bluetooth. The `python3-evdev` and joystick packages were installed/used for validation.
+## Find the current Linux input device
 
-During the verified session Linux reported:
+Run:
 
-| Interface | Device |
-|---|---|
-| Main controller | `js0`, `/dev/input/event11` |
-| Motion sensors | `js1`, `/dev/input/event12` |
-| Touchpad | `/dev/input/event13` |
+```bash
+cat /proc/bus/input/devices | grep -A 8 "DualSense Wireless Controller"
+```
 
-The left stick reported Axis 0 as horizontal and Axis 1 as vertical. On Axis 1, `+32767` was a forward push and `-32767` was a backward pull.
+Find the main controller line containing both `eventX` and `js0`. Motion-sensor and touchpad event devices are separate and should not be substituted for the main controller. Update the `GAMEPAD` path in the gamepad test before running it.
 
-Run `python3 tests/test_gamepad_input.py` to print the device currently configured in the test. Event numbers are assigned dynamically and can change after reconnecting or rebooting, so update the path or add device discovery when needed.
+`/dev/input/eventX` is dynamically assigned after reconnects and reboots. `event11` was the main controller during the verified session, but it is not a permanent identifier.
 
-This confirms input access only; gamepad-controlled rover driving is not implemented yet.
+## Do not mix `jstest` and `evdev` scales
 
----
+| Tool/API | Forward/up | Center | Backward/down |
+|---|---:|---:|---:|
+| `jstest` Y | `-32767` | `0` | `+32767` |
+| Python `evdev` `ABS_Y` | approximately `0` | approximately `128` | approximately `255` |
 
-<a id="中文"></a>
+`ABS_X` in the verified `evdev` session followed the same `0..255` scale: left ≈ `0`, center ≈ `128`, right ≈ `255`.
 
-## 中文
+两个工具读取的是同一个摇杆，但数值范围不同。`jstest` 的前推是负值；当前 Python `evdev` 的前推则接近 0。排错时必须先确认使用的是哪套 API。
 
-### DualSense 验证环境
+## Current driving status
 
-PS5 DualSense 无线手柄已通过蓝牙完成配对、信任和连接。验证过程中安装并使用了 `python3-evdev` 与 joystick 软件包。
+- DualSense input detection: verified.
+- Left-side control from `ABS_Y`: verified.
+- Four-wheel forward, backward, and stop from `ABS_Y`: verified at 30% PWM.
+- `ABS_X` left/right spin-turn code: implemented, not physically verified.
+- Automatic controller discovery and disconnect fail-safe: not implemented.
 
-在已验证的会话中，Linux 显示：
-
-| 接口 | 设备 |
-|---|---|
-| 主控制器 | `js0`、`/dev/input/event11` |
-| 运动传感器 | `js1`、`/dev/input/event12` |
-| 触摸板 | `/dev/input/event13` |
-
-左摇杆 Axis 0 为水平方向，Axis 1 为垂直方向。Axis 1 的 `+32767` 表示向前推，`-32767` 表示向后拉。
-
-运行 `python3 tests/test_gamepad_input.py` 可打印测试文件当前指定的设备。event 编号由系统动态分配，重新连接或重启后可能变化，因此需要按实际情况更新路径，后续也应加入设备自动发现。
-
-目前只验证了输入读取；尚未实现手柄控制小车行驶。
+Always lift the wheels for the first run, confirm the current event path, keep the main power switch reachable, and use Ctrl+C only as a software stop—not as a substitute for a hardware power cutoff.

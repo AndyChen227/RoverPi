@@ -1,1 +1,63 @@
-<!-- -->
+# RoverPi Roadmap / 项目路线图
+
+Status key: `[x]` physically verified or completed; `[~]` implemented but not physically verified; `[ ]` pending.
+
+## Phase 0 — Mechanical assembly / 机械组装
+
+- [x] Assemble the four-wheel chassis.
+- [x] Install four motors, wheels, and upper deck.
+- [x] Mount the Raspberry Pi, motor driver, battery, and protected power path.
+
+## Phase 1 — Basic movement and safety / 基础移动与安全
+
+- [x] Verify Channel 1 forward, backward, and stop.
+- [x] Verify Channel 2 forward, backward, and stop.
+- [x] Verify four-wheel forward, backward, and stop at 30% PWM.
+- [x] Read DualSense input through Linux and Python `evdev`.
+- [x] Verify DualSense-controlled forward, backward, and stop.
+- [~] Implement differential spin-left and spin-right functions.
+- [ ] Physically verify left and right turns with the wheels lifted.
+- [ ] Replace the fixed `/dev/input/eventX` path with controller discovery.
+- [ ] Stop safely on controller disconnect or input timeout.
+- [ ] Run independently after SSH disconnect and at planned startup.
+- [ ] Define and verify safe startup, shutdown, and emergency-stop procedures.
+
+**Milestone exit:** the rover reliably drives forward, backward, left, and right; stops on command and on input failure; and runs without an active SSH session.
+
+## Phase 2 — Encoder feedback / 编码器反馈
+
+- [ ] Verify encoder power and voltage compatibility.
+- [ ] Read quadrature A/B signals from each wheel.
+- [ ] Determine direction, RPM, and traveled distance.
+- [ ] Compare all four wheels under the same command.
+
+## Phase 3 — Closed-loop control / 闭环控制
+
+- [ ] Implement per-side or per-wheel speed measurement.
+- [ ] Add PID speed control.
+- [ ] Improve straight-line tracking and repeatable turns.
+- [ ] Begin wheel odometry.
+
+## Phase 4 — Sensors / 传感器
+
+- [ ] Select distance sensors and an IMU based on measured needs.
+- [ ] Integrate and validate one sensor at a time.
+
+## Phase 5 — Computer vision / 计算机视觉
+
+- [ ] Integrate a Raspberry Pi camera.
+- [ ] Add OpenCV perception experiments after the base is dependable.
+
+## Phase 6 — ROS 2
+
+- [ ] Separate motors, encoders, sensors, and vision into maintainable nodes.
+- [ ] Publish commands, wheel state, and sensor data.
+
+## Phase 7 — Autonomous navigation / 自主导航
+
+- [ ] Localization and sensor fusion.
+- [ ] Mapping/SLAM.
+- [ ] Path planning and obstacle avoidance.
+- [ ] Controlled autonomous navigation experiments.
+
+当前重点仍是第一阶段：先实测左右转，再完成手柄自动发现、断线安全停止和无 SSH 独立运行。编码器与自动驾驶不会在底盘可靠之前提前开始。
