@@ -37,8 +37,8 @@ try:
             else:
                 y = value
 
-        # classify() is the same function the driving test uses: vertical
-        # input first, horizontal only while the vertical axis is centered.
+        # classify() is the same function the driving test uses: whichever
+        # axis the stick is pushed furthest along decides the command.
         command = rover_input.classify(x, y)
         if command != last_command:
             print(f"{command.upper()} x={x} y={y}")

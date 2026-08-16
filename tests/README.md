@@ -40,7 +40,7 @@ are stable enough to deserve a reusable control layer.
 | 4 | `test_motor_channel2.py` | Right side forward for one second | Verified 2026-08-10 |
 | 5 | `test_motor_channel2_backward.py` | Right side backward for one second | Verified 2026-08-10 |
 | 6 | `test_all_motors.py` | Four-wheel forward/stop/backward/stop | Verified 2026-08-10 |
-| 7 | `test_gamepad_all_motors.py` | Full left-stick driving test | Forward/backward/stop verified 2026-08-10; spin turns verified in a later session; dead zone, axis priority, and disconnect watchdog changed 2026-08-16 |
+| 7 | `test_gamepad_all_motors.py` | Full left-stick driving test | Forward/backward/stop verified 2026-08-10; spin turns verified in a later session; dead zone, axis rule, and disconnect watchdog changed 2026-08-16 |
 
 Run a test from the repository root, for example:
 
@@ -57,10 +57,12 @@ their current form have not been executed on the rover.
 1. **One dead zone instead of two.** The read-only rehearsal test used 35
    counts while the test that actually drove four wheels used 20. The narrower
    value was on the more dangerous script. Both now use 35.
-2. **One axis priority instead of two.** The rehearsal test gave the vertical
-   axis priority; the driving test gave the horizontal axis priority. A
-   slightly angled forward push therefore printed `FORWARD` in rehearsal but
-   would have spun the rover in place. Vertical now has priority everywhere.
+2. **One rule for choosing the axis instead of two.** The rehearsal test used
+   the dominant axis — whichever direction the stick is pushed furthest along
+   wins. The driving test gave the horizontal axis absolute priority, so a
+   slightly angled forward push printed `FORWARD` in rehearsal but would have
+   spun the rover in place. The rehearsal script's dominant-axis rule is the
+   better of the two and is now used everywhere.
 3. **Protected direction reversal.** Reversing used to flip a direction pin
    while the motors were still turning. Both PWM channels are now held at zero
    for 50 ms before any direction change.
@@ -92,6 +94,6 @@ driving.
 这些脚本用于手动硬件验证，不是自动单元测试。运行前必须架空轮子并确认当前手柄
 `eventX`。前进、后退、停止和原地左右转都已实测通过。
 
-2026-08-16 的改动统一了死区（35）与轴优先级（垂直优先）、为换向加入 50 毫秒断电
-保护、并加入手柄断线自动停车。这些改动本身尚未在实车上重新运行，属于"已实现、
-等待实体测试"。
+2026-08-16 的改动统一了死区（35）与选轴规则（主导轴优先，取自预演脚本）、为换向
+加入 50 毫秒断电保护、并加入手柄断线自动停车。这些改动本身尚未在实车上重新运行，
+属于"已实现、等待实体测试"。

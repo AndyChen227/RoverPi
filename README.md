@@ -241,11 +241,11 @@ Two shared modules hold everything that used to be copied into all seven tests:
 
 > [!NOTE]
 > The verified results above were produced before the August 16 safety changes
-> (single dead zone, vertical-axis priority, protected reversal, disconnect
+> (single dead zone, dominant-axis rule, protected reversal, disconnect
 > watchdog). The movement sequences and pin states are unchanged, but the
-> scripts in their current form await a confirmation run — in particular, a
-> turn is now requested by moving the stick sideways while it is vertically
-> centered. See [`tests/README.md`](tests/README.md).
+> scripts in their current form await a confirmation run — in particular, the
+> axis the stick is pushed furthest along now decides the command. See
+> [`tests/README.md`](tests/README.md).
 
 > [!WARNING]
 > These are manual hardware tests, not ordinary automated unit tests. Read [`tests/README.md`](tests/README.md), lift all wheels, verify the current event path, and inspect wiring before running them.
@@ -266,7 +266,7 @@ Two shared modules hold everything that used to be copied into all seven tests:
 ### 🧪 Implemented, awaiting physical validation
 
 - a single 35-count dead zone shared by the rehearsal and driving tests;
-- vertical stick priority, so an angled forward push drives forward instead of spinning, and a turn is requested only while the stick is vertically centered;
+- the dominant-axis rule from the rehearsal script, so a mostly-forward push drives forward and a mostly-sideways push turns;
 - a 50 ms zero-power pause before every direction reversal;
 - stop-on-disconnect: both channels stop when the controller device disappears.
 
@@ -343,14 +343,14 @@ The detailed exit criteria for every phase are maintained in [`docs/roadmap.md`]
 
 ### August 16, 2026 — Safety consistency and shared modules
 
-A code review found that the read-only rehearsal test and the test that drove all four wheels disagreed on both the dead zone and the axis priority, that direction reversals flipped a pin while the motors were still turning, and that a dropped Bluetooth link left the last PWM command applied indefinitely. All four were fixed, and the duplicated pin definitions were extracted into `tests/rover_pins.py` and `tests/rover_input.py`. No verified pin state, sequence, or speed was changed.
+A code review found that the read-only rehearsal test and the test that drove all four wheels disagreed on both the dead zone and the rule for choosing an axis, that direction reversals flipped a pin while the motors were still turning, and that a dropped Bluetooth link left the last PWM command applied indefinitely. All four were fixed, and the duplicated pin definitions were extracted into `tests/rover_pins.py` and `tests/rover_input.py`. No verified pin state, sequence, or speed was changed.
 
 ➡️ **[Read the full bilingual development log](docs/devlog/2026-08-16-safety-and-shared-modules.md)** · [previous log](docs/devlog/2026-08-10.md)
 
 ## 🚀 Next Actions
 
 1. ✅ Confirm the refactored scripts still reproduce every verified movement.
-2. 🕹️ Re-check turning with the new mapping: sideways while vertically centered.
+2. 🕹️ Re-check turning under the dominant-axis rule.
 3. 🛑 Confirm immediate stop after releasing the stick in every direction.
 4. 🧯 Physically verify the disconnect watchdog by powering the controller off mid-drive.
 5. 🔎 Discover the DualSense by identity instead of fixed `eventX`.
@@ -568,8 +568,8 @@ Linux 会动态分配 `/dev/input/eventX`。`event11` 只在某一次实测连�
 
 > [!NOTE]
 > 上表的"已验证"结果是 8 月 16 日安全改动之前实测的。运动顺序、引脚电平和 30% 速度
-> 都没有改变，但当前版本的脚本还需要一次确认性重跑——特别是转向现在要"摇杆回到垂直
-> 中位后再向左右推"才会触发。详见 [`tests/README.md`](tests/README.md)。
+> 都没有改变，但当前版本的脚本还需要一次确认性重跑——特别是现在改成"摇杆往哪个方向
+> 推得更多就执行哪个方向"。详见 [`tests/README.md`](tests/README.md)。
 
 > [!WARNING]
 > 这些是手动硬件测试，不是普通自动单元测试。运行前必须阅读 [`tests/README.md`](tests/README.md)、架空四轮、确认当前手柄 event 路径并检查所有接线。
@@ -588,7 +588,7 @@ Linux 会动态分配 `/dev/input/eventX`。`event11` 只在某一次实测连�
 ### 🧪 已实现、等待实体测试
 
 - 预演脚本与驾驶脚本共用同一个 35 计数死区；
-- 垂直 Y 轴优先：斜向前推摇杆时前进而不是意外原地转向，转向只在摇杆垂直回中时触发；
+- 采用预演脚本的主导轴规则：偏前推就前进，偏横推就转向，斜推不再误触发；
 - 每次换向前先把两路 PWM 归零并等待 50 毫秒；
 - 手柄断线自动停车：设备节点消失时立即关闭两路输出。
 
@@ -663,14 +663,14 @@ flowchart LR
 
 ### 2026 年 8 月 16 日——安全一致性与共享模块
 
-一次代码审查发现：只读预演脚本和真正驱动四轮的脚本在死区和轴优先级上并不一致；换向时会在电机仍在转动的瞬间翻转方向引脚；蓝牙断开后上一条 PWM 命令会一直保持。四个问题全部修复，并把重复的引脚定义抽取到 `tests/rover_pins.py` 与 `tests/rover_input.py`。所有已验证的引脚电平、运动顺序和速度均未改动。
+一次代码审查发现：只读预演脚本和真正驱动四轮的脚本在死区和选轴规则上并不一致；换向时会在电机仍在转动的瞬间翻转方向引脚；蓝牙断开后上一条 PWM 命令会一直保持。四个问题全部修复，并把重复的引脚定义抽取到 `tests/rover_pins.py` 与 `tests/rover_input.py`。所有已验证的引脚电平、运动顺序和速度均未改动。
 
 ➡️ **[阅读完整中英双语开发日志](docs/devlog/2026-08-16-safety-and-shared-modules.md)** · [上一篇日志](docs/devlog/2026-08-10.md)
 
 ## 🚀 接下来要做什么
 
 1. ✅ 确认重构后的脚本仍能复现全部已验证动作。
-2. 🕹️ 按新映射复查转向：摇杆垂直回中后再向左右推。
+2. 🕹️ 按主导轴规则复查转向。
 3. 🛑 确认每个方向松开摇杆后都能立即停止。
 4. 🧯 行驶中关闭手柄电源，实测断线看门狗是否立即停车。
 5. 🔎 根据设备身份自动寻找 DualSense，不再写死 `eventX`。

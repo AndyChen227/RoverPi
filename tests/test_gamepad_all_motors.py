@@ -5,8 +5,8 @@ and spin right were physically verified in a later driving session.
 
 Changed on 2026-08-16 and awaiting a new physical run:
   - the dead zone widened from 20 to the shared 35 counts;
-  - the vertical axis now has priority over the horizontal axis, so a turn is
-    requested only while the stick is vertically centered;
+  - the dominant axis now decides the command, so a mostly-forward push
+    drives forward and a mostly-sideways push turns;
   - a disconnect watchdog stops both channels if the controller goes away.
 """
 
@@ -34,8 +34,8 @@ last_command = None
 
 rover_pins.warn_and_wait(
     "RoverPi full gamepad test.\n"
-    "NOTE: a turn is now requested by moving the stick sideways while it is\n"
-    "vertically centered. This mapping changed on 2026-08-16."
+    "NOTE: the axis the stick is pushed furthest along now decides the\n"
+    "command. This mapping changed on 2026-08-16."
 )
 
 try:

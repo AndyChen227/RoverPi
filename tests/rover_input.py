@@ -5,10 +5,14 @@ that a test which only *watches* the stick and a test which actually *drives*
 the motors interpret exactly the same numbers in exactly the same way.
 
 Keeping them in one place matters: before this file existed, the read-only
-rehearsal test used a 35-count dead zone and gave the vertical axis priority,
-while the test that moved all four wheels used a 20-count dead zone and gave
-the horizontal axis priority. Practising with one and driving with the other
-meant the rehearsal did not predict the rover's real behavior.
+rehearsal test used a 35-count dead zone and picked the axis the stick was
+pushed furthest along, while the test that moved all four wheels used a
+20-count dead zone and gave the horizontal axis absolute priority. Practising
+with one and driving with the other meant the rehearsal did not predict the
+rover's real behavior.
+
+The dominant-axis rule kept here comes from the rehearsal script, which is the
+better of the two: see classify().
 """
 
 import os
@@ -106,16 +110,34 @@ def read_axis_events(device, timeout=POLL_TIMEOUT):
 def classify(x, y):
     """Turn the latest stick position into one discrete movement word.
 
-    Vertical input has priority. The horizontal axis is read only while the
-    vertical axis is inside its dead zone, so a slightly angled forward push
-    drives forward instead of unexpectedly spinning the rover in place.
+    The dominant axis wins: whichever direction the stick is pushed further
+    decides the command. A mostly-forward push drives forward even if it is
+    slightly angled, and a mostly-sideways push turns even if it is slightly
+    angled. Neither axis is privileged, so there is no stick position that
+    silently refuses to do the obvious thing.
+
+    The alternative — giving one axis absolute priority — was what the two
+    original test scripts did, and they disagreed about which axis won. Strict
+    vertical priority also means a turn can only be requested from a perfectly
+    centered stick, which is awkward to drive.
     """
-    if y < LOW_THRESHOLD:
-        return "forward"
-    if y > HIGH_THRESHOLD:
-        return "backward"
-    if x < LOW_THRESHOLD:
-        return "turn_left"
-    if x > HIGH_THRESHOLD:
-        return "turn_right"
+    dx = x - CENTER
+    dy = y - CENTER
+
+    # Inside the dead zone on both axes: the stick is released or drifting.
+    if abs(dx) < DEADZONE and abs(dy) < DEADZONE:
+        return "stop"
+
+    if abs(dy) > abs(dx):
+        if dy < -DEADZONE:
+            return "forward"
+        if dy > DEADZONE:
+            return "backward"
+    else:
+        if dx < -DEADZONE:
+            return "turn_left"
+        if dx > DEADZONE:
+            return "turn_right"
+
+    # Not reachable with the checks above, but stopping is the safe default.
     return "stop"

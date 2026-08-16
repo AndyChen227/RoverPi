@@ -20,8 +20,9 @@ implemented but unverified.
 
 `test_gamepad_input.py` prints movement words without touching a motor pin. It
 is the safe way to learn the stick before driving. But it used a 35-count dead
-zone and gave the vertical axis priority, while `test_gamepad_all_motors.py`
-used a 20-count dead zone and gave the *horizontal* axis priority.
+zone and chose the axis the stick was pushed furthest along, while
+`test_gamepad_all_motors.py` used a 20-count dead zone and gave the
+*horizontal* axis absolute priority.
 
 Two consequences followed. A slightly angled forward push printed `FORWARD`
 during rehearsal but would have made the rover spin in place. And the narrower
@@ -66,8 +67,10 @@ They are plain modules, not a `src/` package. Runtime code moves to `src/` only
 after turning, controller discovery, and fail-safe behavior are stable.
 
 The seven test scripts now import from those modules and contain only their own
-decision logic. The dead zone is 35 everywhere. `classify()` gives the vertical
-axis priority everywhere. `rover_pins` holds both PWM channels at zero for
+decision logic. The dead zone is 35 everywhere. `classify()` uses the
+rehearsal script's dominant-axis rule everywhere: whichever axis the stick is
+pushed furthest along decides the command, so neither axis can silently refuse
+to do the obvious thing. `rover_pins` holds both PWM channels at zero for
 50 ms before any direction reversal, and skips writing a command that is
 already applied.
 
@@ -112,14 +115,13 @@ session avoids it.
 One distinction is worth keeping. What the turning session verified is the
 *pin combination* — those four direction inputs really do spin the rover the
 stated way. Which stick region requests a turn is a separate question, and it
-changed today: the horizontal axis lost priority to the vertical axis, so a
-turn is now requested only while the stick is vertically centered. The movement
-is verified; the new way of asking for it is not.
+changed today: absolute horizontal priority was replaced by the dominant-axis
+rule. The movement is verified; the new way of asking for it is not.
 
 ### Next physical session
 
 1. Re-run every verified sequence against the refactored scripts and confirm identical behavior.
-2. Re-check turning under the new mapping: sideways while vertically centered.
+2. Re-check turning under the dominant-axis rule.
 3. Power the controller off mid-drive and confirm both channels stop.
 4. Confirm the wider dead zone still allows comfortable driving.
 
@@ -132,8 +134,8 @@ is verified; the new way of asking for it is not.
 **1. 预演脚本无法预测小车的真实行为。**
 
 `test_gamepad_input.py` 只打印方向、不碰电机引脚，是驾驶前熟悉摇杆的安全方式。但它
-使用 35 计数死区、垂直轴优先，而 `test_gamepad_all_motors.py` 使用 20 计数死区、
-**水平轴优先**。
+使用 35 计数死区、按"哪个方向推得更多就听哪个"判断，而 `test_gamepad_all_motors.py`
+使用 20 计数死区、**水平轴绝对优先**。
 
 由此产生两个后果：斜着往前推摇杆时，预演显示 `FORWARD`，实车却会原地转向；而更窄的
 死区偏偏用在真正驱动四个轮子的脚本上——如果 35 才是让松开的摇杆保持安静所需的值，
@@ -173,8 +175,9 @@ is verified; the new way of asking for it is not.
 正式迁到 `src/`。
 
 七个测试脚本现在从这两个模块导入，自身只保留各自的决策逻辑。死区统一为 35；
-`classify()` 在所有地方都让垂直轴优先；`rover_pins` 在任何换向前先把两路 PWM 归零并
-等待 50 毫秒，并跳过重复写入已经生效的命令。
+`classify()` 在所有地方都采用预演脚本的主导轴规则——摇杆往哪个方向推得更多就执行
+哪个方向，任何一个轴都不会被另一个轴无声地压制；`rover_pins` 在任何换向前先把两路
+PWM 归零并等待 50 毫秒，并跳过重复写入已经生效的命令。
 
 断线看门狗用 `select()` 轮询替代 `read_loop()`：
 
@@ -208,12 +211,11 @@ is verified; the new way of asking for it is not.
 
 有一点需要区分清楚：那次实测验证的是**引脚组合**——这四个方向输入确实让小车按预期
 原地转。而"摇杆的哪个区域触发转向"是另一回事，并且今天改了：水平轴的优先级让给了
-垂直轴，现在只有摇杆垂直回到中位时向左右推才会转向。动作已验证，请求动作的新方式
-尚未验证。
+规则：水平轴绝对优先被主导轴规则取代。动作已验证，请求动作的新方式尚未验证。
 
 ### 下次实车任务
 
 1. 用重构后的脚本重跑全部已验证动作，确认行为完全一致。
-2. 按新映射复查转向：摇杆垂直回中后再向左右推。
+2. 按主导轴规则复查转向。
 3. 行驶中关闭手柄电源，确认两路电机立即停止。
 4. 确认放宽后的死区不影响正常驾驶手感。

@@ -45,15 +45,15 @@ Find the main controller line containing both `eventX` and `js0`. Motion-sensor 
 - Left-side control from `ABS_Y`: verified.
 - Four-wheel forward, backward, and stop from `ABS_Y`: verified at 30% PWM.
 - Left/right spin turns: verified in a driving session after 2026-08-10.
-- Vertical-axis priority for requesting a turn: changed 2026-08-16, awaiting a confirmation run.
+- Dominant-axis rule for choosing a command: unified 2026-08-16, awaiting a confirmation run.
 - Disconnect fail-safe: implemented on 2026-08-16, not physically verified.
 - Automatic controller discovery: not implemented.
 
 The shared dead zone is 35 counts either side of `128`, so the driving range is
-below `93` for forward and above `163` for backward. Vertical input has
-priority; horizontal input is read only while the vertical axis is centered.
+below `93` for forward and above `163` for backward.
+Whichever axis the stick is pushed furthest along decides the command.
 
-统一死区为中心值 `128` 两侧各 35 计数：小于 `93` 为前进，大于 `163` 为后退。垂直轴
-优先，只有当垂直轴回到死区内时才读取水平轴。
+统一死区为中心值 `128` 两侧各 35 计数。摇杆往哪个方向推得更多，就执行哪个方向的
+命令。
 
 Always lift the wheels for the first run, confirm the current event path, keep the main power switch reachable, and use Ctrl+C only as a software stop—not as a substitute for a hardware power cutoff.

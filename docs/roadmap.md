@@ -17,11 +17,11 @@ Status key: `[x]` physically verified or completed; `[~]` implemented but not ph
 - [x] Verify DualSense-controlled forward, backward, and stop.
 - [x] Implement differential spin-left and spin-right functions.
 - [x] Physically verify left and right turns.
-- [~] Share one dead zone and one axis priority between the rehearsal and driving tests.
+- [~] Share one dead zone and one axis rule between the rehearsal and driving tests.
 - [~] Hold both PWM channels at zero before every direction reversal.
 - [~] Stop safely on controller disconnect.
 - [ ] Physically verify the disconnect watchdog by powering the controller off mid-drive.
-- [ ] Re-run every verified sequence against the refactored scripts, including turning under the new vertical-priority mapping.
+- [ ] Re-run every verified sequence against the refactored scripts, including turning under the dominant-axis rule.
 - [ ] Replace the fixed `/dev/input/eventX` path with controller discovery.
 - [ ] Decide whether a stale-input timeout is safe, given that a held stick emits no events.
 - [ ] Run independently after SSH disconnect and at planned startup.
