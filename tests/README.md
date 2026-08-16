@@ -34,13 +34,16 @@ are stable enough to deserve a reusable control layer.
 
 | Order | File | Purpose | Physical status |
 |---:|---|---|---|
-| 1 | `test_gamepad_input.py` | Print directions without moving motors | Verified 2026-08-10; re-run after the 2026-08-16 changes |
-| 2 | `test_motor_channel1.py` | Left side forward for one second | Verified 2026-08-10 |
+| 1 | `test_gamepad_input.py` | Print directions without moving motors | Verified 2026-08-16, including the disconnect watchdog |
+| 2 | `test_motor_channel1.py` | Left side forward for one second | Verified 2026-08-16; the corrected forward polarity was confirmed |
 | 3 | `test_gamepad_motor_left.py` | DualSense controls left forward/backward/stop | Verified 2026-08-10; dead zone changed 2026-08-16 |
-| 4 | `test_motor_channel2.py` | Right side forward for one second | Verified 2026-08-10 |
-| 5 | `test_motor_channel2_backward.py` | Right side backward for one second | Verified 2026-08-10 |
-| 6 | `test_all_motors.py` | Four-wheel forward/stop/backward/stop | Verified 2026-08-10 |
-| 7 | `test_gamepad_all_motors.py` | Full left-stick driving test | Forward/backward/stop verified 2026-08-10; spin turns verified in a later session; dead zone, axis rule, and disconnect watchdog changed 2026-08-16 |
+| 4 | `test_motor_channel2.py` | Right side forward for one second | Verified 2026-08-16 |
+| 5 | `test_motor_channel2_backward.py` | Right side backward for one second | Verified 2026-08-16 |
+| 6 | `test_all_motors.py` | Four-wheel forward/stop/backward/stop | Verified 2026-08-16 |
+| 7 | `test_gamepad_all_motors.py` | Full left-stick driving test | Verified 2026-08-16: forward, backward, stop, both spin turns, and stop-on-disconnect |
+
+Only entry 3 has not been re-run since the August 16 changes; every other line
+was confirmed on the rover that day.
 
 Run a test from the repository root, for example:
 
@@ -48,11 +51,11 @@ Run a test from the repository root, for example:
 python3 tests/test_all_motors.py
 ```
 
-## Changes made on 2026-08-16 (not yet physically re-run)
+## Changes made on 2026-08-16 (physically re-run and verified)
 
-These changes were made for safety and consistency. The movement sequences,
-verified pin states, and the 30% test speed are unchanged, but the scripts in
-their current form have not been executed on the rover.
+These changes were made for safety and consistency, then confirmed on the rover
+the same day. The movement sequences, verified pin states, and the 30% test
+speed are unchanged.
 
 1. **One dead zone instead of two.** The read-only rehearsal test used 35
    counts while the test that actually drove four wheels used 20. The narrower
@@ -79,6 +82,19 @@ sends no events while the stick is held perfectly still. A stale-input timeout
 would need its own physical test to confirm it does not interrupt normal
 driving.
 
+### Considered and rejected: dominant-axis hysteresis
+
+With the stick held at exactly 45 degrees, `|dx|` and `|dy|` are within one
+count of each other and a single count of noise flips the command between
+forward and turning. Adding hysteresis — requiring the dominant axis to lead by
+a margin before the command switches — would remove the flip.
+
+It was tested on the rover instead and the flip does not occur in normal
+driving: the stick has to be held on an exact diagonal, which its physical gate
+makes hard to do by accident, and any push past that boundary resolves cleanly.
+The extra state was not worth adding for a position nobody holds. Revisit this
+only if a real drive produces stuttering on diagonals.
+
 ## Important boundaries
 
 - Every Python file keeps detailed teaching comments alongside the verified pin
@@ -95,5 +111,5 @@ driving.
 `eventX`。前进、后退、停止和原地左右转都已实测通过。
 
 2026-08-16 的改动统一了死区（35）与选轴规则（主导轴优先，取自预演脚本）、为换向
-加入 50 毫秒断电保护、并加入手柄断线自动停车。这些改动本身尚未在实车上重新运行，
-属于"已实现、等待实体测试"。
+加入 50 毫秒断电保护、并加入手柄断线自动停车。这些改动当天已在实车上全部重新运行
+确认，包括行驶中关闭手柄电源后四轮立即停止。

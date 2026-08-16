@@ -93,7 +93,7 @@ Forward, backward, stop, and both spin turns are now physically verified. The im
 | DualSense driving | ✅ Verified | Forward, backward, stop, and both spin turns driven from the controller |
 | Left/right turning | ✅ Verified | Differential spin turns confirmed on the rover after August 10 |
 | Controller discovery | ⏳ Pending | Current tests still require the active `/dev/input/eventX` path |
-| Disconnect fail-safe | 🧪 Test next | Watchdog implemented on August 16; stops both channels when the controller device disappears |
+| Disconnect fail-safe | ✅ Verified | Controller powered off mid-drive; both channels stopped immediately |
 | Encoder feedback | 🗓️ Planned | Wheel direction, RPM, distance, and odometry |
 | Autonomous navigation | 🔭 Future | Added after the mobile base is dependable |
 
@@ -107,15 +107,16 @@ flowchart LR
     D --> E["Four-wheel motion<br/>✅"]
     E --> F["Gamepad FWD/REV/STOP<br/>✅"]
     F --> G["Spin turns<br/>✅"]
-    G --> H["Disconnect fail-safe<br/>🧪 Next"]
-    H --> I["Standalone, no SSH<br/>⏳"]
+    G --> H["Disconnect fail-safe<br/>✅"]
+    H --> I["Controller discovery<br/>🧪 Next"]
+    I --> J["Standalone, no SSH<br/>⏳"]
 
     classDef done fill:#166534,color:#fff,stroke:#22c55e,stroke-width:2px;
     classDef next fill:#92400e,color:#fff,stroke:#f59e0b,stroke-width:2px;
     classDef pending fill:#1f2937,color:#fff,stroke:#64748b,stroke-width:2px;
-    class A,B,C,D,E,F,G done;
-    class H next;
-    class I pending;
+    class A,B,C,D,E,F,G,H done;
+    class I next;
+    class J pending;
 ```
 
 ## 🧩 System Architecture
@@ -240,12 +241,9 @@ Two shared modules hold everything that used to be copied into all seven tests:
 | `test_gamepad_all_motors.py` | Full left-stick driving | ✅ Verified |
 
 > [!NOTE]
-> The verified results above were produced before the August 16 safety changes
-> (single dead zone, dominant-axis rule, protected reversal, disconnect
-> watchdog). The movement sequences and pin states are unchanged, but the
-> scripts in their current form await a confirmation run — in particular, the
-> axis the stick is pushed furthest along now decides the command. See
-> [`tests/README.md`](tests/README.md).
+> Every entry above was re-confirmed on the rover on August 16, after the
+> safety changes (single dead zone, dominant-axis rule, protected reversal,
+> disconnect watchdog). See [`tests/README.md`](tests/README.md).
 
 > [!WARNING]
 > These are manual hardware tests, not ordinary automated unit tests. Read [`tests/README.md`](tests/README.md), lift all wheels, verify the current event path, and inspect wiring before running them.
@@ -261,14 +259,12 @@ Two shared modules hold everything that used to be copied into all seven tests:
 - four-wheel forward → stop → backward → stop at 30% PWM;
 - DualSense-controlled four-wheel forward, backward, and stop;
 - spin left: left side backward + right side forward;
-- spin right: left side forward + right side backward.
-
-### 🧪 Implemented, awaiting physical validation
-
+- spin right: left side forward + right side backward;
 - a single 35-count dead zone shared by the rehearsal and driving tests;
-- the dominant-axis rule from the rehearsal script, so a mostly-forward push drives forward and a mostly-sideways push turns;
+- the dominant-axis rule, so a mostly-forward push drives forward and a mostly-sideways push turns;
 - a 50 ms zero-power pause before every direction reversal;
-- stop-on-disconnect: both channels stop when the controller device disappears.
+- **stop-on-disconnect**: powering the controller off mid-drive stopped all four wheels immediately;
+- the refactored scripts reproducing every movement verified before the refactor.
 
 ### ⏳ Not implemented yet
 
@@ -349,13 +345,12 @@ A code review found that the read-only rehearsal test and the test that drove al
 
 ## 🚀 Next Actions
 
-1. ✅ Confirm the refactored scripts still reproduce every verified movement.
-2. 🕹️ Re-check turning under the dominant-axis rule.
-3. 🛑 Confirm immediate stop after releasing the stick in every direction.
-4. 🧯 Physically verify the disconnect watchdog by powering the controller off mid-drive.
-5. 🔎 Discover the DualSense by identity instead of fixed `eventX`.
-6. 🔌 Run safely without an active SSH session.
-7. 🎚️ Add analog differential mixing for smoother steering.
+1. 🔎 Discover the DualSense by identity instead of fixed `eventX`.
+2. 🔌 Run safely without an active SSH session, and at planned startup.
+3. 🎚️ Add analog differential mixing for smoother steering.
+4. 🛞 Move from wheels-lifted testing to a controlled ground drive.
+5. 🧱 Extract the stable logic from `tests/` into a real `src/` control layer.
+6. 🔬 Begin Phase 2: read the wheel encoders.
 
 ## 💡 Engineering Principles
 
@@ -424,7 +419,7 @@ Raspberry Pi 5
 | DualSense 驾驶 | ✅ 已验证 | 手柄控制前进、后退、停止与左右原地转向均已实测 |
 | 左右转向 | ✅ 已验证 | 8 月 10 日之后的一次驾驶中确认差速原地转向 |
 | 手柄自动发现 | ⏳ 待完成 | 当前仍需填写本次连接的 `/dev/input/eventX` |
-| 断线安全停车 | 🧪 下一项测试 | 8 月 16 日已实现看门狗：手柄设备节点消失时立即停止两路电机 |
+| 断线安全停车 | ✅ 已验证 | 行驶中关闭手柄电源，两路电机立即停止 |
 | 编码器反馈 | 🗓️ 已规划 | 测量方向、转速、距离与里程 |
 | 自主导航 | 🔭 未来阶段 | 移动底盘可靠后再加入 |
 
@@ -567,9 +562,8 @@ Linux 会动态分配 `/dev/input/eventX`。`event11` 只在某一次实测连�
 | `test_gamepad_all_motors.py` | 左摇杆控制全部四轮 | ✅ 已验证 |
 
 > [!NOTE]
-> 上表的"已验证"结果是 8 月 16 日安全改动之前实测的。运动顺序、引脚电平和 30% 速度
-> 都没有改变，但当前版本的脚本还需要一次确认性重跑——特别是现在改成"摇杆往哪个方向
-> 推得更多就执行哪个方向"。详见 [`tests/README.md`](tests/README.md)。
+> 上表每一项都已在 8 月 16 日安全改动（统一死区、主导轴规则、换向保护、断线看门狗）
+> 之后于实车上重新确认。详见 [`tests/README.md`](tests/README.md)。
 
 > [!WARNING]
 > 这些是手动硬件测试，不是普通自动单元测试。运行前必须阅读 [`tests/README.md`](tests/README.md)、架空四轮、确认当前手柄 event 路径并检查所有接线。
@@ -583,14 +577,12 @@ Linux 会动态分配 `/dev/input/eventX`。`event11` 只在某一次实测连�
 - 30% PWM 四轮前进 → 停止 → 后退 → 停止；
 - DualSense 控制四轮前进、后退和停止；
 - 原地左转：左侧后退 + 右侧前进；
-- 原地右转：左侧前进 + 右侧后退。
-
-### 🧪 已实现、等待实体测试
-
+- 原地右转：左侧前进 + 右侧后退；
 - 预演脚本与驾驶脚本共用同一个 35 计数死区；
-- 采用预演脚本的主导轴规则：偏前推就前进，偏横推就转向，斜推不再误触发；
+- 主导轴规则：偏前推就前进，偏横推就转向，斜推不再误触发；
 - 每次换向前先把两路 PWM 归零并等待 50 毫秒；
-- 手柄断线自动停车：设备节点消失时立即关闭两路输出。
+- **手柄断线自动停车**：行驶中关闭手柄电源，四轮立即停止；
+- 重构后的脚本复现了重构前验证过的全部动作。
 
 ### ⏳ 尚未实现
 
@@ -669,13 +661,12 @@ flowchart LR
 
 ## 🚀 接下来要做什么
 
-1. ✅ 确认重构后的脚本仍能复现全部已验证动作。
-2. 🕹️ 按主导轴规则复查转向。
-3. 🛑 确认每个方向松开摇杆后都能立即停止。
-4. 🧯 行驶中关闭手柄电源，实测断线看门狗是否立即停车。
-5. 🔎 根据设备身份自动寻找 DualSense，不再写死 `eventX`。
-6. 🔌 验证无 SSH 连接时也能安全独立运行。
-7. 🎚️ 加入模拟差速混合，实现更平滑的转向。
+1. 🔎 根据设备身份自动寻找 DualSense，不再写死 `eventX`。
+2. 🔌 验证无 SSH 连接和开机自启动时也能安全独立运行。
+3. 🎚️ 加入模拟差速混合，实现更平滑的转向。
+4. 🛞 从架空测试过渡到受控的地面行驶。
+5. 🧱 把 `tests/` 里稳定的逻辑提取成正式的 `src/` 控制层。
+6. 🔬 进入第 2 阶段：读取轮式编码器。
 
 ## 💡 工程原则
 

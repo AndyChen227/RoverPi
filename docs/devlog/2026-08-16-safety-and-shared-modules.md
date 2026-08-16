@@ -118,12 +118,51 @@ stated way. Which stick region requests a turn is a separate question, and it
 changed today: absolute horizontal priority was replaced by the dominant-axis
 rule. The movement is verified; the new way of asking for it is not.
 
+### Verification session — same day
+
+Everything above was then run on the rover with all four wheels lifted.
+
+| Check | Result |
+|---|---|
+| Shared modules import and claim the correct pins | ✅ `GPIO12 23 24 13 5 6`, dead zone 35, thresholds 93/163 |
+| `test_gamepad_input.py` — four directions | ✅ |
+| Angled forward push resolves to forward, not a spin | ✅ `FORWARD x=172 y=83` |
+| Released stick returns to stop and stays quiet | ✅ |
+| Disconnect watchdog, no motors | ✅ `CONTROLLER LOST (Errno 19)` and clean exit |
+| `test_motor_channel1.py` — corrected forward polarity | ✅ left side ran rover-forward |
+| Channel 2 forward and backward | ✅ |
+| `test_all_motors.py` — four wheels | ✅ after a hardware fault, see below |
+| `test_gamepad_all_motors.py` — full driving | ✅ forward, backward, stop, both spin turns |
+| **Disconnect watchdog while driving** | ✅ all four wheels stopped immediately |
+
+The disconnect watchdog is the result that matters most. Under the previous
+`read_loop()` the same action left the last PWM command applied and the rover
+would have kept driving until someone reached the power switch.
+
+### The four-wheel test that was not a code bug
+
+`test_all_motors.py` printed its whole sequence correctly while no wheel moved,
+immediately after both single-channel tests had passed. The failing test was
+the only one using the newly written `_apply()` path, which made new code look
+guilty. Re-running the original pre-refactor pin pattern as a one-line command
+failed the same way, which cleared the software; the inline fuse was loose in
+its holder, conducting well enough for two motors and dropping out under the
+inrush of four. Full write-up in
+[`notes/debugging/loose-fuse-holder.md`](../../notes/debugging/loose-fuse-holder.md).
+
+### Considered and rejected
+
+Hysteresis on the dominant-axis rule. Held at an exact 45 degrees, `|dx|` and
+`|dy|` sit within one count and noise flips the command between forward and
+turning. On the rover this does not happen in normal driving — the diagonal is
+hard to hold by accident and any push past it resolves cleanly — so the extra
+state was not added. Revisit only if a real drive stutters on diagonals.
+
 ### Next physical session
 
-1. Re-run every verified sequence against the refactored scripts and confirm identical behavior.
-2. Re-check turning under the dominant-axis rule.
-3. Power the controller off mid-drive and confirm both channels stop.
-4. Confirm the wider dead zone still allows comfortable driving.
+1. Discover the controller by identity instead of the fixed `event11` path.
+2. Run without an active SSH session, then at planned startup.
+3. Move from wheels-lifted testing to a controlled ground drive.
 
 ---
 
@@ -213,9 +252,43 @@ PWM 归零并等待 50 毫秒，并跳过重复写入已经生效的命令。
 原地转。而"摇杆的哪个区域触发转向"是另一回事，并且今天改了：水平轴的优先级让给了
 规则：水平轴绝对优先被主导轴规则取代。动作已验证，请求动作的新方式尚未验证。
 
+### 当天的验证测试
+
+上述改动当天就在实车上跑完了，全程四轮架空。
+
+| 检查项 | 结果 |
+|---|---|
+| 共享模块导入并占用正确引脚 | ✅ `GPIO12 23 24 13 5 6`，死区 35，阈值 93/163 |
+| `test_gamepad_input.py` 四个方向 | ✅ |
+| 斜向前推判为前进而非原地转 | ✅ `FORWARD x=172 y=83` |
+| 松手回到停止且不再刷屏 | ✅ |
+| 断线看门狗（不带电机） | ✅ `CONTROLLER LOST (Errno 19)` 并干净退出 |
+| `test_motor_channel1.py` 修正后的前进极性 | ✅ 左侧朝小车前进方向转 |
+| Channel 2 前进与后退 | ✅ |
+| `test_all_motors.py` 四轮 | ✅ 期间遇到一次硬件故障，见下 |
+| `test_gamepad_all_motors.py` 完整驾驶 | ✅ 前进、后退、停止、左右原地转 |
+| **行驶中断线停车** | ✅ 四轮立即停止 |
+
+其中最重要的是最后一项。旧的 `read_loop()` 在同样操作下会保持上一条 PWM 命令，小车
+会一直跑到有人去按总开关。
+
+### 那次"四轮不转"其实不是代码问题
+
+两个单通道测试刚刚通过，`test_all_motors.py` 却打印全部正确而一个轮子不转。偏偏失败
+的这个是唯一走新写的 `_apply()` 路径的测试，看起来非常像新代码的锅。用一条内联命令
+按重构前的原始写法直接操作引脚，同样不转——软件因此洗清嫌疑。真正原因是串联保险丝
+在保险丝座里松了，两个电机的电流还能导通，四个电机的启动浪涌下就断开。完整记录见
+[`notes/debugging/loose-fuse-holder.md`](../../notes/debugging/loose-fuse-holder.md)。
+
+### 考虑过但没有采用
+
+给主导轴规则加迟滞。摇杆停在正好 45 度时 `|dx|` 与 `|dy|` 只差一个计数，噪声会让命令
+在前进和转向之间反复跳变。但实车上正常驾驶不会出现——那个对角位置很难无意中保持住，
+稍微推过去判断就很干脆。为一个没人会停留的位置增加状态不划算。除非以后地面行驶时
+真的在斜向出现顿挫，否则不重新考虑。
+
 ### 下次实车任务
 
-1. 用重构后的脚本重跑全部已验证动作，确认行为完全一致。
-2. 按主导轴规则复查转向。
-3. 行驶中关闭手柄电源，确认两路电机立即停止。
-4. 确认放宽后的死区不影响正常驾驶手感。
+1. 按设备身份自动发现手柄，不再写死 `event11`。
+2. 验证无 SSH 连接时运行，再做开机自启动。
+3. 从架空测试过渡到受控的地面行驶。

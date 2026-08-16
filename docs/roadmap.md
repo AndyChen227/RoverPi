@@ -17,11 +17,11 @@ Status key: `[x]` physically verified or completed; `[~]` implemented but not ph
 - [x] Verify DualSense-controlled forward, backward, and stop.
 - [x] Implement differential spin-left and spin-right functions.
 - [x] Physically verify left and right turns.
-- [~] Share one dead zone and one axis rule between the rehearsal and driving tests.
-- [~] Hold both PWM channels at zero before every direction reversal.
-- [~] Stop safely on controller disconnect.
-- [ ] Physically verify the disconnect watchdog by powering the controller off mid-drive.
-- [ ] Re-run every verified sequence against the refactored scripts, including turning under the dominant-axis rule.
+- [x] Share one dead zone and one axis rule between the rehearsal and driving tests.
+- [x] Hold both PWM channels at zero before every direction reversal.
+- [x] Stop safely on controller disconnect.
+- [x] Physically verify the disconnect watchdog by powering the controller off mid-drive.
+- [x] Re-run every verified sequence against the refactored scripts, including turning under the dominant-axis rule.
 - [ ] Replace the fixed `/dev/input/eventX` path with controller discovery.
 - [ ] Decide whether a stale-input timeout is safe, given that a held stick emits no events.
 - [ ] Run independently after SSH disconnect and at planned startup.
@@ -65,6 +65,6 @@ Status key: `[x]` physically verified or completed; `[~]` implemented but not ph
 - [ ] Path planning and obstacle avoidance.
 - [ ] Controlled autonomous navigation experiments.
 
-当前重点仍是第一阶段：四个方向的驾驶已经全部实测通过，剩下的是失效行为与独立运行——先实测断线看门狗，再完成手柄自动发现和无 SSH 运行。编码器与自动驾驶不会在底盘可靠之前提前开始。
+当前重点仍是第一阶段。四个方向的驾驶和断线安全停车都已实测通过，剩下的是手柄自动发现、无 SSH 独立运行，以及从架空测试过渡到地面行驶。编码器与自动驾驶不会在底盘可靠之前提前开始。
 
-2026-08-16 新增的三项 `[~]` 是代码层面的安全改动，尚未在实车上运行，因此不能计入已完成项。
+2026-08-16 的安全改动当天已在实车上全部验证，因此计入已完成项。

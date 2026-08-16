@@ -45,8 +45,8 @@ Find the main controller line containing both `eventX` and `js0`. Motion-sensor 
 - Left-side control from `ABS_Y`: verified.
 - Four-wheel forward, backward, and stop from `ABS_Y`: verified at 30% PWM.
 - Left/right spin turns: verified in a driving session after 2026-08-10.
-- Dominant-axis rule for choosing a command: unified 2026-08-16, awaiting a confirmation run.
-- Disconnect fail-safe: implemented on 2026-08-16, not physically verified.
+- Dominant-axis rule for choosing a command: unified and verified 2026-08-16.
+- Disconnect fail-safe: verified 2026-08-16 by powering the controller off mid-drive.
 - Automatic controller discovery: not implemented.
 
 The shared dead zone is 35 counts either side of `128`, so the driving range is
