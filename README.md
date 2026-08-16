@@ -16,10 +16,10 @@
 
 [![Motor Channels](https://img.shields.io/badge/motor%20channels-2%2F2%20verified-22C55E?style=flat-square)](#verified-motor-control)
 [![Movement](https://img.shields.io/badge/FWD%20%7C%20REV%20%7C%20STOP-verified-22C55E?style=flat-square)](#project-status)
-[![Turning](https://img.shields.io/badge/turning-code%20ready%20%7C%20test%20pending-F59E0B?style=flat-square)](#verification-boundary)
+[![Turning](https://img.shields.io/badge/spin%20turns-verified-22C55E?style=flat-square)](#verification-boundary)
 [![Controller](https://img.shields.io/badge/controller-PS5%20DualSense-2563EB?style=flat-square&logo=playstation&logoColor=white)](#dualsense-control)
 
-### [English](#english) · [中文](#chinese) · [Latest Devlog](docs/devlog/2026-08-10.md) · [Tests](tests/README.md) · [Roadmap](docs/roadmap.md)
+### [English](#english) · [中文](#chinese) · [Latest Devlog](docs/devlog/2026-08-16-safety-and-shared-modules.md) · [Tests](tests/README.md) · [Roadmap](docs/roadmap.md)
 
 </div>
 
@@ -73,13 +73,13 @@ Left motors + Right motors
 Forward · Backward · Turn · Stop
 ```
 
-Forward, backward, and stop are now physically verified. The immediate next milestone is physical validation of left/right spin turns, followed by controller discovery, disconnect fail-safe behavior, and standalone operation without an active SSH session.
+Forward, backward, stop, and both spin turns are now physically verified. The immediate next milestone is confirming the disconnect fail-safe on the rover, followed by controller discovery and standalone operation without an active SSH session.
 
 <a id="project-status"></a>
 
 ## 📊 Project Status
 
-**Last updated: August 10, 2026**
+**Last updated: August 16, 2026**
 
 | Area | Status | What is true today |
 |---|:---:|---|
@@ -90,10 +90,10 @@ Forward, backward, and stop are now physically verified. The immediate next mile
 | Driver Channel 2 | ✅ Verified | Right-side forward, backward, and stop at 30% PWM |
 | Four-wheel movement | ✅ Verified | Forward → stop → backward → stop sequence completed |
 | DualSense input | ✅ Verified | Bluetooth, Linux input, and Python `evdev` data validated |
-| DualSense driving | ✅ Partial | Forward, backward, and stop physically verified |
-| Left/right turning | 🧪 Test next | Differential spin-turn code implemented; physical test pending |
+| DualSense driving | ✅ Verified | Forward, backward, stop, and both spin turns driven from the controller |
+| Left/right turning | ✅ Verified | Differential spin turns confirmed on the rover after August 10 |
 | Controller discovery | ⏳ Pending | Current tests still require the active `/dev/input/eventX` path |
-| Disconnect fail-safe | ⏳ Pending | Input timeout/disconnect must stop both motor channels |
+| Disconnect fail-safe | ✅ Verified | Controller powered off mid-drive; both channels stopped immediately |
 | Encoder feedback | 🗓️ Planned | Wheel direction, RPM, distance, and odometry |
 | Autonomous navigation | 🔭 Future | Added after the mobile base is dependable |
 
@@ -106,15 +106,17 @@ flowchart LR
     C --> D["Channel 2<br/>✅"]
     D --> E["Four-wheel motion<br/>✅"]
     E --> F["Gamepad FWD/REV/STOP<br/>✅"]
-    F --> G["Physical turning test<br/>🧪 Next"]
-    G --> H["Fail-safe + standalone<br/>⏳"]
+    F --> G["Spin turns<br/>✅"]
+    G --> H["Disconnect fail-safe<br/>✅"]
+    H --> I["Controller discovery<br/>🧪 Next"]
+    I --> J["Standalone, no SSH<br/>⏳"]
 
     classDef done fill:#166534,color:#fff,stroke:#22c55e,stroke-width:2px;
     classDef next fill:#92400e,color:#fff,stroke:#f59e0b,stroke-width:2px;
     classDef pending fill:#1f2937,color:#fff,stroke:#64748b,stroke-width:2px;
-    class A,B,C,D,E,F done;
-    class G next;
-    class H pending;
+    class A,B,C,D,E,F,G,H done;
+    class I next;
+    class J pending;
 ```
 
 ## 🧩 System Architecture
@@ -191,8 +193,8 @@ All GPIO references use **BCM numbering**.
 | ⏹️ Stop | Direction inputs off, PWM 0 | Direction inputs off, PWM 0 | ✅ Verified |
 | ⬆️ Forward | Forward | Forward | ✅ Verified |
 | ⬇️ Backward | Backward | Backward | ✅ Verified |
-| ↪️ Spin left | Backward | Forward | 🧪 Code only |
-| ↩️ Spin right | Forward | Backward | 🧪 Code only |
+| ↪️ Spin left | Backward | Forward | ✅ Verified |
+| ↩️ Spin right | Forward | Backward | ✅ Verified |
 
 The left and right motors face opposite directions on the chassis, so rover-forward requires opposite electrical direction states on the two channels. The repository records explicit verified pin states rather than trusting a generic library method name.
 
@@ -221,6 +223,13 @@ Linux assigns `/dev/input/eventX` dynamically. `event11` was valid during one ve
 
 The `tests/` directory contains intentionally small, teaching-oriented hardware checks. Every Python file explains what the next line or block does.
 
+Two shared modules hold everything that used to be copied into all seven tests:
+
+| Module | Contents |
+|---|---|
+| `rover_pins.py` | Verified BCM pin map, verified polarities, 30% test speed, movement commands |
+| `rover_input.py` | DualSense path, observed `0..255` calibration, shared dead zone, reading loop |
+
 | Test | Purpose | Status |
 |---|---|:---:|
 | `test_gamepad_input.py` | Read stick directions without moving motors | ✅ Verified |
@@ -229,7 +238,12 @@ The `tests/` directory contains intentionally small, teaching-oriented hardware 
 | `test_motor_channel2.py` | Run right motors forward briefly | ✅ Verified |
 | `test_motor_channel2_backward.py` | Run right motors backward briefly | ✅ Verified |
 | `test_all_motors.py` | Four-wheel forward/stop/backward sequence | ✅ Verified |
-| `test_gamepad_all_motors.py` | Full left-stick driving | ⚠️ Turns pending |
+| `test_gamepad_all_motors.py` | Full left-stick driving | ✅ Verified |
+
+> [!NOTE]
+> Every entry above was re-confirmed on the rover on August 16, after the
+> safety changes (single dead zone, dominant-axis rule, protected reversal,
+> disconnect watchdog). See [`tests/README.md`](tests/README.md).
 
 > [!WARNING]
 > These are manual hardware tests, not ordinary automated unit tests. Read [`tests/README.md`](tests/README.md), lift all wheels, verify the current event path, and inspect wiring before running them.
@@ -243,18 +257,19 @@ The `tests/` directory contains intentionally small, teaching-oriented hardware 
 - Channel 1 left-side forward, backward, and stop;
 - Channel 2 right-side forward, backward, and stop;
 - four-wheel forward → stop → backward → stop at 30% PWM;
-- DualSense-controlled four-wheel forward, backward, and stop.
-
-### 🧪 Implemented, awaiting physical validation
-
+- DualSense-controlled four-wheel forward, backward, and stop;
 - spin left: left side backward + right side forward;
 - spin right: left side forward + right side backward;
-- horizontal stick commands taking priority in the current discrete controller.
+- a single 35-count dead zone shared by the rehearsal and driving tests;
+- the dominant-axis rule, so a mostly-forward push drives forward and a mostly-sideways push turns;
+- a 50 ms zero-power pause before every direction reversal;
+- **stop-on-disconnect**: powering the controller off mid-drive stopped all four wheels immediately;
+- the refactored scripts reproducing every movement verified before the refactor.
 
 ### ⏳ Not implemented yet
 
 - automatic DualSense device discovery;
-- stop-on-disconnect or input-timeout fail-safe;
+- stale-input timeout (a held stick emits no events, so this needs its own test);
 - analog tank mixing for smooth turns;
 - production startup and no-SSH standalone operation.
 
@@ -263,8 +278,12 @@ The `tests/` directory contains intentionally small, teaching-oriented hardware 
 ```text
 RoverPi/
 ├── README.md                         # Project home / bilingual overview
+├── LICENSE                           # MIT, software and documentation only
+├── requirements.txt                  # gpiozero, evdev, lgpio
 ├── tests/                            # Focused hardware-validation scripts
 │   ├── README.md                     # Safety, order, and verification status
+│   ├── rover_pins.py                 # Verified pin map, polarities, commands
+│   ├── rover_input.py                # DualSense calibration and reading loop
 │   └── test_*.py                     # Teaching-oriented Python tests
 ├── docs/
 │   ├── devlog/                       # Bilingual milestone logs
@@ -318,21 +337,20 @@ The detailed exit criteria for every phase are maintained in [`docs/roadmap.md`]
 
 ## 📓 Latest Development Log
 
-### August 10, 2026 — Four-wheel and DualSense milestone
+### August 16, 2026 — Safety consistency and shared modules
 
-The latest session verified both motor-driver channels, corrected the actual rover-forward polarities, completed four-wheel forward/backward/stop tests, and connected DualSense `ABS_Y` input to all four motors. Differential left/right turning logic was added but intentionally remains labeled as unverified.
+A code review found that the read-only rehearsal test and the test that drove all four wheels disagreed on both the dead zone and the rule for choosing an axis, that direction reversals flipped a pin while the motors were still turning, and that a dropped Bluetooth link left the last PWM command applied indefinitely. All four were fixed, and the duplicated pin definitions were extracted into `tests/rover_pins.py` and `tests/rover_input.py`. No verified pin state, sequence, or speed was changed.
 
-➡️ **[Read the full bilingual development log](docs/devlog/2026-08-10.md)**
+➡️ **[Read the full bilingual development log](docs/devlog/2026-08-16-safety-and-shared-modules.md)** · [previous log](docs/devlog/2026-08-10.md)
 
 ## 🚀 Next Actions
 
-1. 🛞 Lift all wheels and physically verify spin-left and spin-right.
-2. 🛑 Confirm immediate stop after releasing the stick in every direction.
-3. 🔎 Discover the DualSense by identity instead of fixed `eventX`.
-4. 🧯 Stop both channels on disconnect or stale input.
-5. 🔌 Run safely without an active SSH session.
-6. 🧱 Extract stable logic into reusable runtime modules.
-7. 🎚️ Add analog differential mixing for smoother steering.
+1. 🔎 Discover the DualSense by identity instead of fixed `eventX`.
+2. 🔌 Run safely without an active SSH session, and at planned startup.
+3. 🎚️ Add analog differential mixing for smoother steering.
+4. 🛞 Move from wheels-lifted testing to a controlled ground drive.
+5. 🧱 Extract the stable logic from `tests/` into a real `src/` control layer.
+6. 🔬 Begin Phase 2: read the wheel encoders.
 
 ## 💡 Engineering Principles
 
@@ -383,11 +401,11 @@ Raspberry Pi 5
 前进 · 后退 · 转向 · 停止
 ```
 
-目前前进、后退和停止已经完成实体测试。下一项里程碑是架空验证左右原地转向，之后再完成手柄自动发现、断线安全停车以及无 SSH 独立运行。
+目前前进、后退、停止和左右原地转向都已完成实体测试。下一项里程碑是在实车上确认断线安全停车，之后再完成手柄自动发现和无 SSH 独立运行。
 
 ## 📊 项目状态
 
-**最后更新：2026 年 8 月 10 日**
+**最后更新：2026 年 8 月 16 日**
 
 | 部分 | 状态 | 当前真实情况 |
 |---|:---:|---|
@@ -398,10 +416,10 @@ Raspberry Pi 5
 | 驱动 Channel 2 | ✅ 已验证 | 右侧前进、后退、停止，30% PWM |
 | 四轮联动 | ✅ 已验证 | 已完成前进 → 停止 → 后退 → 停止 |
 | DualSense 输入 | ✅ 已验证 | 蓝牙、Linux 输入与 Python `evdev` 均已验证 |
-| DualSense 驾驶 | ✅ 部分完成 | 手柄控制前进、后退、停止已实测 |
-| 左右转向 | 🧪 下一项测试 | 差速原地转向代码已实现，尚未实体测试 |
+| DualSense 驾驶 | ✅ 已验证 | 手柄控制前进、后退、停止与左右原地转向均已实测 |
+| 左右转向 | ✅ 已验证 | 8 月 10 日之后的一次驾驶中确认差速原地转向 |
 | 手柄自动发现 | ⏳ 待完成 | 当前仍需填写本次连接的 `/dev/input/eventX` |
-| 断线安全停车 | ⏳ 待完成 | 需要在断线或输入超时时立即停止两路电机 |
+| 断线安全停车 | ✅ 已验证 | 行驶中关闭手柄电源，两路电机立即停止 |
 | 编码器反馈 | 🗓️ 已规划 | 测量方向、转速、距离与里程 |
 | 自主导航 | 🔭 未来阶段 | 移动底盘可靠后再加入 |
 
@@ -414,15 +432,16 @@ flowchart LR
     C --> D["Channel 2<br/>✅"]
     D --> E["四轮运动<br/>✅"]
     E --> F["手柄前进/后退/停止<br/>✅"]
-    F --> G["实体转向测试<br/>🧪 下一步"]
-    G --> H["安全保护与独立运行<br/>⏳"]
+    F --> G["原地左右转<br/>✅"]
+    G --> H["断线安全停车<br/>🧪 下一步"]
+    H --> I["无 SSH 独立运行<br/>⏳"]
 
     classDef done fill:#166534,color:#fff,stroke:#22c55e,stroke-width:2px;
     classDef next fill:#92400e,color:#fff,stroke:#f59e0b,stroke-width:2px;
     classDef pending fill:#1f2937,color:#fff,stroke:#64748b,stroke-width:2px;
-    class A,B,C,D,E,F done;
-    class G next;
-    class H pending;
+    class A,B,C,D,E,F,G done;
+    class H next;
+    class I pending;
 ```
 
 ## 🧩 系统架构
@@ -497,8 +516,8 @@ flowchart LR
 | ⏹️ 停止 | 方向输入关闭，PWM 为 0 | 方向输入关闭，PWM 为 0 | ✅ 已验证 |
 | ⬆️ 前进 | 前进 | 前进 | ✅ 已验证 |
 | ⬇️ 后退 | 后退 | 后退 | ✅ 已验证 |
-| ↪️ 原地左转 | 后退 | 前进 | 🧪 只有代码 |
-| ↩️ 原地右转 | 前进 | 后退 | 🧪 只有代码 |
+| ↪️ 原地左转 | 后退 | 前进 | ✅ 已验证 |
+| ↩️ 原地右转 | 前进 | 后退 | ✅ 已验证 |
 
 左右电机在底盘上的安装方向相反，所以小车前进时两路驱动需要相反的电气方向输入。仓库记录的是实体测试确认过的引脚状态，而不是依赖通用库函数名称来猜测方向。
 
@@ -525,6 +544,13 @@ Linux 会动态分配 `/dev/input/eventX`。`event11` 只在某一次实测连�
 
 `tests/` 保存单一目的、容易理解和排错的硬件验证脚本。每个 Python 文件都包含教学式注释，说明下一行或下一组代码的作用。
 
+原本被复制到 7 个测试文件里的引脚定义和手柄常量，现在集中在两个共享模块：
+
+| 模块 | 内容 |
+|---|---|
+| `rover_pins.py` | 已验证的 BCM 引脚映射、方向极性、30% 测试速度与运动命令 |
+| `rover_input.py` | DualSense 设备路径、实测 `0..255` 标定、统一死区与读取循环 |
+
 | 测试文件 | 作用 | 状态 |
 |---|---|:---:|
 | `test_gamepad_input.py` | 只读取摇杆方向，不驱动电机 | ✅ 已验证 |
@@ -533,7 +559,11 @@ Linux 会动态分配 `/dev/input/eventX`。`event11` 只在某一次实测连�
 | `test_motor_channel2.py` | 右侧电机短暂前进 | ✅ 已验证 |
 | `test_motor_channel2_backward.py` | 右侧电机短暂后退 | ✅ 已验证 |
 | `test_all_motors.py` | 四轮前进/停止/后退流程 | ✅ 已验证 |
-| `test_gamepad_all_motors.py` | 左摇杆控制全部四轮 | ⚠️ 转向待验证 |
+| `test_gamepad_all_motors.py` | 左摇杆控制全部四轮 | ✅ 已验证 |
+
+> [!NOTE]
+> 上表每一项都已在 8 月 16 日安全改动（统一死区、主导轴规则、换向保护、断线看门狗）
+> 之后于实车上重新确认。详见 [`tests/README.md`](tests/README.md)。
 
 > [!WARNING]
 > 这些是手动硬件测试，不是普通自动单元测试。运行前必须阅读 [`tests/README.md`](tests/README.md)、架空四轮、确认当前手柄 event 路径并检查所有接线。
@@ -545,18 +575,19 @@ Linux 会动态分配 `/dev/input/eventX`。`event11` 只在某一次实测连�
 - Channel 1 左侧前进、后退和停止；
 - Channel 2 右侧前进、后退和停止；
 - 30% PWM 四轮前进 → 停止 → 后退 → 停止；
-- DualSense 控制四轮前进、后退和停止。
-
-### 🧪 已实现、等待实体测试
-
-- 左转：左侧后退 + 右侧前进；
-- 右转：左侧前进 + 右侧后退；
-- 当前离散控制中，水平 X 轴命令优先。
+- DualSense 控制四轮前进、后退和停止；
+- 原地左转：左侧后退 + 右侧前进；
+- 原地右转：左侧前进 + 右侧后退；
+- 预演脚本与驾驶脚本共用同一个 35 计数死区；
+- 主导轴规则：偏前推就前进，偏横推就转向，斜推不再误触发；
+- 每次换向前先把两路 PWM 归零并等待 50 毫秒；
+- **手柄断线自动停车**：行驶中关闭手柄电源，四轮立即停止；
+- 重构后的脚本复现了重构前验证过的全部动作。
 
 ### ⏳ 尚未实现
 
 - 自动发现 DualSense 主输入设备；
-- 手柄断线或输入超时自动停车；
+- 输入超时停车（摇杆保持不动时手柄不发事件，需要单独实测确认）；
 - 模拟差速混合与平滑转向；
 - 正式开机启动和无 SSH 独立运行。
 
@@ -565,8 +596,12 @@ Linux 会动态分配 `/dev/input/eventX`。`event11` 只在某一次实测连�
 ```text
 RoverPi/
 ├── README.md                         # 项目主页 / 中英双语概览
+├── LICENSE                           # MIT，仅覆盖软件与文档
+├── requirements.txt                  # gpiozero、evdev、lgpio
 ├── tests/                            # 单项硬件验证脚本
 │   ├── README.md                     # 安全说明、顺序与验证状态
+│   ├── rover_pins.py                 # 已验证引脚映射、极性与运动命令
+│   ├── rover_input.py                # DualSense 标定与读取循环
 │   └── test_*.py                     # 带教学注释的 Python 测试
 ├── docs/
 │   ├── devlog/                       # 中英双语阶段日志
@@ -618,21 +653,20 @@ flowchart LR
 
 ## 📓 最新开发日志
 
-### 2026 年 8 月 10 日——四轮联动与 DualSense 里程碑
+### 2026 年 8 月 16 日——安全一致性与共享模块
 
-本次开发验证了两路电机驱动，纠正并确认了相对于车身的真实前进极性，完成四轮前进/后退/停止，并把 DualSense `ABS_Y` 输入连接到全部四个电机。左右差速转向逻辑已经加入，但仍然诚实地标记为尚未实测。
+一次代码审查发现：只读预演脚本和真正驱动四轮的脚本在死区和选轴规则上并不一致；换向时会在电机仍在转动的瞬间翻转方向引脚；蓝牙断开后上一条 PWM 命令会一直保持。四个问题全部修复，并把重复的引脚定义抽取到 `tests/rover_pins.py` 与 `tests/rover_input.py`。所有已验证的引脚电平、运动顺序和速度均未改动。
 
-➡️ **[阅读完整中英双语开发日志](docs/devlog/2026-08-10.md)**
+➡️ **[阅读完整中英双语开发日志](docs/devlog/2026-08-16-safety-and-shared-modules.md)** · [上一篇日志](docs/devlog/2026-08-10.md)
 
 ## 🚀 接下来要做什么
 
-1. 🛞 架空全部车轮，实测原地左转和右转。
-2. 🛑 确认每个方向松开摇杆后都能立即停止。
-3. 🔎 根据设备身份自动寻找 DualSense，不再写死 `eventX`。
-4. 🧯 手柄断线或输入停止时立即关闭两路 PWM。
-5. 🔌 验证无 SSH 连接时也能安全独立运行。
-6. 🧱 把稳定逻辑提取成可复用的正式运行模块。
-7. 🎚️ 加入模拟差速混合，实现更平滑的转向。
+1. 🔎 根据设备身份自动寻找 DualSense，不再写死 `eventX`。
+2. 🔌 验证无 SSH 连接和开机自启动时也能安全独立运行。
+3. 🎚️ 加入模拟差速混合，实现更平滑的转向。
+4. 🛞 从架空测试过渡到受控的地面行驶。
+5. 🧱 把 `tests/` 里稳定的逻辑提取成正式的 `src/` 控制层。
+6. 🔬 进入第 2 阶段：读取轮式编码器。
 
 ## 💡 工程原则
 

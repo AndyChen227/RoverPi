@@ -1,0 +1,22 @@
+# RoverPi Python dependencies
+#
+# Install on the Raspberry Pi with:
+#     pip install -r requirements.txt
+#
+# On Raspberry Pi OS the system packages are often already present and may be
+# preferred over pip:
+#     sudo apt install python3-gpiozero python3-evdev python3-lgpio joystick
+
+# GPIO output: PWM speed signals and digital direction pins.
+gpiozero>=2.0
+
+# DualSense input: reads /dev/input/eventX through the Linux input layer.
+evdev>=1.6
+
+# gpiozero pin backend for the Raspberry Pi 5. The Pi 5 uses a different GPIO
+# controller than earlier models, so the older RPi.GPIO backend does not work.
+lgpio>=0.2
+
+# Not a Python package: `jstest` comes from the `joystick` apt package and is
+# used only for independent controller inspection. Remember that jstest and
+# evdev report different numeric scales for the same stick.

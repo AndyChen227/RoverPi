@@ -42,7 +42,7 @@ The Python tests read `evdev`, so they use center `128` and a dead zone. A low `
 - Spin right: left side forward, right side backward.
 - A later analog mixing controller can make one side slower than the other for smoother turns.
 
-Only forward, backward, and stop are physically verified. The current spin-turn combinations are derived from verified side polarities but remain unverified as complete rover movements.
+All five movements are now physically verified. Forward, backward, and stop were verified on August 10, 2026; the two spin turns were verified in a later driving session.
 
 ## Future fix
 

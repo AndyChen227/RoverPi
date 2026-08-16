@@ -15,14 +15,19 @@ Status key: `[x]` physically verified or completed; `[~]` implemented but not ph
 - [x] Verify four-wheel forward, backward, and stop at 30% PWM.
 - [x] Read DualSense input through Linux and Python `evdev`.
 - [x] Verify DualSense-controlled forward, backward, and stop.
-- [~] Implement differential spin-left and spin-right functions.
-- [ ] Physically verify left and right turns with the wheels lifted.
+- [x] Implement differential spin-left and spin-right functions.
+- [x] Physically verify left and right turns.
+- [x] Share one dead zone and one axis rule between the rehearsal and driving tests.
+- [x] Hold both PWM channels at zero before every direction reversal.
+- [x] Stop safely on controller disconnect.
+- [x] Physically verify the disconnect watchdog by powering the controller off mid-drive.
+- [x] Re-run every verified sequence against the refactored scripts, including turning under the dominant-axis rule.
 - [ ] Replace the fixed `/dev/input/eventX` path with controller discovery.
-- [ ] Stop safely on controller disconnect or input timeout.
+- [ ] Decide whether a stale-input timeout is safe, given that a held stick emits no events.
 - [ ] Run independently after SSH disconnect and at planned startup.
 - [ ] Define and verify safe startup, shutdown, and emergency-stop procedures.
 
-**Milestone exit:** the rover reliably drives forward, backward, left, and right; stops on command and on input failure; and runs without an active SSH session.
+**Milestone exit:** the rover reliably drives forward, backward, left, and right; stops on command and on input failure; and runs without an active SSH session. Driving in all four directions is done; the remaining work is failure behavior and independence.
 
 ## Phase 2 — Encoder feedback / 编码器反馈
 
@@ -60,4 +65,6 @@ Status key: `[x]` physically verified or completed; `[~]` implemented but not ph
 - [ ] Path planning and obstacle avoidance.
 - [ ] Controlled autonomous navigation experiments.
 
-当前重点仍是第一阶段：先实测左右转，再完成手柄自动发现、断线安全停止和无 SSH 独立运行。编码器与自动驾驶不会在底盘可靠之前提前开始。
+当前重点仍是第一阶段。四个方向的驾驶和断线安全停车都已实测通过，剩下的是手柄自动发现、无 SSH 独立运行，以及从架空测试过渡到地面行驶。编码器与自动驾驶不会在底盘可靠之前提前开始。
+
+2026-08-16 的安全改动当天已在实车上全部验证，因此计入已完成项。
