@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Editors and tooling
+.vscode/
+.idea/
+*.swp
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# Operating systems
+.DS_Store
+Thumbs.db
+
+# Local logs and captures that should not enter the engineering record
+*.log
+logs/
+*.tmp
+
+# Raw sensor or encoder dumps produced during testing
+data/raw/
