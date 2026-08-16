@@ -16,9 +16,14 @@ Status key: `[x]` physically verified or completed; `[~]` implemented but not ph
 - [x] Read DualSense input through Linux and Python `evdev`.
 - [x] Verify DualSense-controlled forward, backward, and stop.
 - [~] Implement differential spin-left and spin-right functions.
+- [~] Share one dead zone and one axis priority between the rehearsal and driving tests.
+- [~] Hold both PWM channels at zero before every direction reversal.
+- [~] Stop safely on controller disconnect.
 - [ ] Physically verify left and right turns with the wheels lifted.
+- [ ] Physically verify the disconnect watchdog by powering the controller off mid-drive.
+- [ ] Re-run the August 10 verified sequences against the refactored scripts.
 - [ ] Replace the fixed `/dev/input/eventX` path with controller discovery.
-- [ ] Stop safely on controller disconnect or input timeout.
+- [ ] Decide whether a stale-input timeout is safe, given that a held stick emits no events.
 - [ ] Run independently after SSH disconnect and at planned startup.
 - [ ] Define and verify safe startup, shutdown, and emergency-stop procedures.
 
@@ -60,4 +65,6 @@ Status key: `[x]` physically verified or completed; `[~]` implemented but not ph
 - [ ] Path planning and obstacle avoidance.
 - [ ] Controlled autonomous navigation experiments.
 
-当前重点仍是第一阶段：先实测左右转，再完成手柄自动发现、断线安全停止和无 SSH 独立运行。编码器与自动驾驶不会在底盘可靠之前提前开始。
+当前重点仍是第一阶段：先实测左右转与断线看门狗，再完成手柄自动发现和无 SSH 独立运行。编码器与自动驾驶不会在底盘可靠之前提前开始。
+
+2026-08-16 新增的四项 `[~]` 是代码层面的安全改动，尚未在实车上运行，因此不能计入已完成项。

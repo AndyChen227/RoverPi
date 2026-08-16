@@ -24,7 +24,7 @@ Run:
 cat /proc/bus/input/devices | grep -A 8 "DualSense Wireless Controller"
 ```
 
-Find the main controller line containing both `eventX` and `js0`. Motion-sensor and touchpad event devices are separate and should not be substituted for the main controller. Update the `GAMEPAD` path in the gamepad test before running it.
+Find the main controller line containing both `eventX` and `js0`. Motion-sensor and touchpad event devices are separate and should not be substituted for the main controller. Update the `GAMEPAD` path in [`tests/rover_input.py`](../tests/rover_input.py) before running any gamepad test — it is now defined in one place instead of three.
 
 `/dev/input/eventX` is dynamically assigned after reconnects and reboots. `event11` was the main controller during the verified session, but it is not a permanent identifier.
 
@@ -45,6 +45,14 @@ Find the main controller line containing both `eventX` and `js0`. Motion-sensor 
 - Left-side control from `ABS_Y`: verified.
 - Four-wheel forward, backward, and stop from `ABS_Y`: verified at 30% PWM.
 - `ABS_X` left/right spin-turn code: implemented, not physically verified.
-- Automatic controller discovery and disconnect fail-safe: not implemented.
+- Disconnect fail-safe: implemented on 2026-08-16, not physically verified.
+- Automatic controller discovery: not implemented.
+
+The shared dead zone is 35 counts either side of `128`, so the driving range is
+below `93` for forward and above `163` for backward. Vertical input has
+priority; horizontal input is read only while the vertical axis is centered.
+
+统一死区为中心值 `128` 两侧各 35 计数：小于 `93` 为前进，大于 `163` 为后退。垂直轴
+优先，只有当垂直轴回到死区内时才读取水平轴。
 
 Always lift the wheels for the first run, confirm the current event path, keep the main power switch reachable, and use Ctrl+C only as a software stop—not as a substitute for a hardware power cutoff.
