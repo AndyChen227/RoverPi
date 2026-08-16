@@ -2,136 +2,75 @@
 
 Forward, backward, and stop were physically verified on 2026-08-10.
 Left/right spin-turn logic is implemented but has NOT been physically tested.
+
+Changed on 2026-08-16 and awaiting a new physical run:
+  - the dead zone widened from 20 to the shared 35 counts;
+  - the vertical axis now has priority over the horizontal axis;
+  - a disconnect watchdog stops both channels if the controller goes away.
 """
 
-# evdev reads the controller; gpiozero generates motor-driver signals; sleep
-# provides a safety delay before the event loop can move the rover.
-from evdev import InputDevice, ecodes
-from gpiozero import DigitalOutputDevice, PWMOutputDevice
-from time import sleep
+import rover_input
+import rover_pins
 
 
-# Verified BCM GPIO map for both motor-driver channels.
-PWM1 = PWMOutputDevice(12)
-INA1 = DigitalOutputDevice(23)
-INB1 = DigitalOutputDevice(24)
-PWM2 = PWMOutputDevice(13)
-INA2 = DigitalOutputDevice(5)
-INB2 = DigitalOutputDevice(6)
+# Every pin number, polarity, and speed comes from rover_pins. Every controller
+# threshold comes from rover_input. Neither is redefined here, so this file
+# contains only the decision loop.
+COMMANDS = {
+    "stop": rover_pins.stop,
+    "forward": rover_pins.forward,
+    "backward": rover_pins.backward,
+    "turn_left": rover_pins.turn_left,
+    "turn_right": rover_pins.turn_right,
+}
 
-# event11 is only the value from the verified session. Linux may assign a new
-# eventX number after reconnecting or rebooting; discover and update it first.
-GAMEPAD = "/dev/input/event11"
-gamepad = InputDevice(GAMEPAD)
-LEFT_STICK_X = ecodes.ABS_X
-LEFT_STICK_Y = ecodes.ABS_Y
+gamepad = rover_input.open_gamepad()
 
-# Observed evdev calibration: left/up≈0, center≈128, right/down≈255.
-CENTER = 128
-DEADZONE = 20
-LOW_THRESHOLD = CENTER - DEADZONE
-HIGH_THRESHOLD = CENTER + DEADZONE
-SPEED = 0.30
-x = CENTER
-y = CENTER
+# Assume the stick is centered until the controller reports otherwise.
+x = rover_input.CENTER
+y = rover_input.CENTER
+last_command = None
 
-
-def stop():
-    """Remove PWM power and clear all direction pins."""
-    PWM1.value = 0
-    PWM2.value = 0
-    INA1.off()
-    INB1.off()
-    INA2.off()
-    INB2.off()
-
-
-def forward(speed=SPEED):
-    """Use the physically verified forward polarity on both sides."""
-    INA1.off()
-    INB1.on()
-    INA2.on()
-    INB2.off()
-    PWM1.value = speed
-    PWM2.value = speed
-
-
-def backward(speed=SPEED):
-    """Use the physically verified backward polarity on both sides."""
-    INA1.on()
-    INB1.off()
-    INA2.off()
-    INB2.on()
-    PWM1.value = speed
-    PWM2.value = speed
-
-
-def turn_left(speed=SPEED):
-    """Spin left: left side backward and right side forward (UNVERIFIED)."""
-    # This differential-drive combination is implemented from the verified
-    # side polarities, but the complete turn has not been tested on the rover.
-    INA1.on()
-    INB1.off()
-    INA2.on()
-    INB2.off()
-    PWM1.value = speed
-    PWM2.value = speed
-
-
-def turn_right(speed=SPEED):
-    """Spin right: left side forward and right side backward (UNVERIFIED)."""
-    # As above, this combination is logically correct but awaits a safe,
-    # wheels-lifted physical verification.
-    INA1.off()
-    INB1.on()
-    INA2.off()
-    INB2.on()
-    PWM1.value = speed
-    PWM2.value = speed
-
-
-def update_movement():
-    """Translate the latest X/Y values into one discrete movement command."""
-    # Horizontal commands intentionally have priority in this simple test.
-    # Avoid diagonal input until a future analog mixing controller is added.
-    if x < LOW_THRESHOLD:
-        print(f"LEFT (UNVERIFIED TURN) x={x} y={y}")
-        turn_left()
-    elif x > HIGH_THRESHOLD:
-        print(f"RIGHT (UNVERIFIED TURN) x={x} y={y}")
-        turn_right()
-    elif y < LOW_THRESHOLD:
-        print(f"FORWARD x={x} y={y}")
-        forward()
-    elif y > HIGH_THRESHOLD:
-        print(f"BACKWARD x={x} y={y}")
-        backward()
-    else:
-        print(f"STOP x={x} y={y}")
-        stop()
-
-
-# Establish a safe initial state and allow time to lift all wheels.
-stop()
-print("RoverPi full gamepad test starts in 3 seconds.")
-print("WARNING: left/right turn behavior is not yet physically verified.")
-sleep(3)
+rover_pins.warn_and_wait(
+    "RoverPi full gamepad test.\n"
+    "WARNING: left/right turn behavior is not yet physically verified."
+)
 
 try:
-    # Update only the two left-stick axes. Each new reading immediately
-    # recalculates the movement command from the latest stored X and Y values.
-    for event in gamepad.read_loop():
-        if event.type != ecodes.EV_ABS:
+    while True:
+        try:
+            axes = rover_input.read_axis_events(gamepad)
+        except ConnectionError as error:
+            # This is the fail-safe: without it, a dropped Bluetooth link left
+            # the last PWM command applied and the rover kept driving.
+            print(f"CONTROLLER LOST ({error}) - stopping both channels.")
+            break
+
+        if not axes:
+            # No new stick data, controller still present: hold the current
+            # command. A DualSense sends nothing while it is held still.
             continue
-        if event.code == LEFT_STICK_X:
-            x = event.value
-            update_movement()
-        elif event.code == LEFT_STICK_Y:
-            y = event.value
-            update_movement()
+
+        for code, value in axes:
+            if code == rover_input.ecodes.ABS_X:
+                x = value
+            else:
+                y = value
+
+        command = rover_input.classify(x, y)
+
+        # Print only on change so the console stays readable and the loop is
+        # not slowed down by hundreds of identical lines per second.
+        if command != last_command:
+            note = " (UNVERIFIED TURN)" if command.startswith("turn_") else ""
+            print(f"{command.upper()}{note} x={x} y={y}")
+            last_command = command
+
+        COMMANDS[command]()
 except KeyboardInterrupt:
     print("\nCtrl+C detected.")
 finally:
-    # Always attempt a software stop when the program exits.
-    stop()
+    # Always attempt a software stop when the program exits. This is not a
+    # substitute for the physical power switch.
+    rover_pins.stop()
     print("All motors stopped safely.")
