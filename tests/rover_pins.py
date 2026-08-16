@@ -142,9 +142,9 @@ def backward(speed=SPEED):
 def turn_left(speed=SPEED):
     """Spin left: left side backward, right side forward.
 
-    NOT PHYSICALLY VERIFIED. The combination is derived from the two verified
-    single-side polarities, but the complete turn has never been run on the
-    rover. Lift all four wheels before testing it.
+    The pin combination is physically verified: the rover spins left when
+    these four direction inputs are applied. Which stick region requests the
+    turn changed on 2026-08-16 and awaits a confirmation run.
     """
     _apply("turn_left", LEFT_BACKWARD, RIGHT_FORWARD, speed)
 
@@ -152,7 +152,8 @@ def turn_left(speed=SPEED):
 def turn_right(speed=SPEED):
     """Spin right: left side forward, right side backward.
 
-    NOT PHYSICALLY VERIFIED. See the warning in turn_left().
+    Physically verified in the same session as turn_left(). See the note there
+    about the changed stick mapping.
     """
     _apply("turn_right", LEFT_FORWARD, RIGHT_BACKWARD, speed)
 

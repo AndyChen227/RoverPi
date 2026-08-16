@@ -40,7 +40,7 @@ are stable enough to deserve a reusable control layer.
 | 4 | `test_motor_channel2.py` | Right side forward for one second | Verified 2026-08-10 |
 | 5 | `test_motor_channel2_backward.py` | Right side backward for one second | Verified 2026-08-10 |
 | 6 | `test_all_motors.py` | Four-wheel forward/stop/backward/stop | Verified 2026-08-10 |
-| 7 | `test_gamepad_all_motors.py` | Full left-stick driving test | Forward/backward/stop verified 2026-08-10; turns unverified; dead zone, axis priority, and disconnect watchdog changed 2026-08-16 |
+| 7 | `test_gamepad_all_motors.py` | Full left-stick driving test | Forward/backward/stop verified 2026-08-10; spin turns verified in a later session; dead zone, axis priority, and disconnect watchdog changed 2026-08-16 |
 
 Run a test from the repository root, for example:
 
@@ -81,7 +81,8 @@ driving.
 
 - Every Python file keeps detailed teaching comments alongside the verified pin
   states, 30% PWM, timing, thresholds, and movement priority.
-- The turn functions in `rover_pins.py` are deliberately labeled unverified.
+- The turn functions in `rover_pins.py` have verified pin combinations, but the
+  stick region that requests a turn changed on August 16 and awaits a run.
 - The fixed `/dev/input/event11` value documents the verified session but must
   be changed when Linux assigns a different number. Automatic controller
   discovery is still not implemented.
@@ -89,7 +90,7 @@ driving.
   operation without an SSH session.
 
 这些脚本用于手动硬件验证，不是自动单元测试。运行前必须架空轮子并确认当前手柄
-`eventX`。前进、后退和停止已实测；左右转仅完成代码实现，尚未实测。
+`eventX`。前进、后退、停止和原地左右转都已实测通过。
 
 2026-08-16 的改动统一了死区（35）与轴优先级（垂直优先）、为换向加入 50 毫秒断电
 保护、并加入手柄断线自动停车。这些改动本身尚未在实车上重新运行，属于"已实现、

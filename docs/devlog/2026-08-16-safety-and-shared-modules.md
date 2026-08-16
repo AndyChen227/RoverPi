@@ -95,10 +95,31 @@ only and makes no claim about physical safety), `requirements.txt`,
 `.gitignore`, and a filled-in `hardware/bom.md`, which the README had linked to
 while it was empty.
 
+### Recorded late: spin turns are verified
+
+Spin left and spin right were physically verified in a driving session after
+August 10, but the repository was never updated and still described them as
+code-only. That is now corrected across the README, `docs/wiring.md`,
+`docs/hardware.md`, `docs/setup.md`, `docs/roadmap.md`, `tests/README.md`, and
+`notes/debugging/dualsense-input.md`. The August 10 devlog is deliberately left
+untouched, because it is an accurate record of what was true on that date.
+
+The exact date of the turning session was not logged and is recorded here as
+"after August 10, 2026". Losing a date is the small cost of verifying on the
+rover and updating the repository later; verifying and recording in the same
+session avoids it.
+
+One distinction is worth keeping. What the turning session verified is the
+*pin combination* — those four direction inputs really do spin the rover the
+stated way. Which stick region requests a turn is a separate question, and it
+changed today: the horizontal axis lost priority to the vertical axis, so a
+turn is now requested only while the stick is vertically centered. The movement
+is verified; the new way of asking for it is not.
+
 ### Next physical session
 
-1. Re-run the August 10 sequences against the refactored scripts and confirm identical behavior.
-2. Lift all four wheels and verify spin-left and spin-right for the first time.
+1. Re-run every verified sequence against the refactored scripts and confirm identical behavior.
+2. Re-check turning under the new mapping: sideways while vertically centered.
 3. Power the controller off mid-drive and confirm both channels stop.
 4. Confirm the wider dead zone still allows comfortable driving.
 
@@ -175,9 +196,24 @@ while it was empty.
 `requirements.txt`、`.gitignore`，并补齐了 README 一直链接却是空文件的
 `hardware/bom.md`。
 
+### 补记：原地转向其实已经实测通过
+
+原地左转和右转在 8 月 10 日之后的一次驾驶中已经实测通过，但仓库一直没更新，还写着
+"只有代码"。现已在 README、`docs/wiring.md`、`docs/hardware.md`、`docs/setup.md`、
+`docs/roadmap.md`、`tests/README.md` 和 `notes/debugging/dualsense-input.md` 中全部
+更正。8 月 10 日那篇日志刻意不改——它准确记录了那一天的真实情况。
+
+转向那次的具体日期没有记录，这里只能写成"2026 年 8 月 10 日之后"。丢掉一个日期，是
+"先实测、后补文档"的小代价；实测完当场记录就不会有这个问题。
+
+有一点需要区分清楚：那次实测验证的是**引脚组合**——这四个方向输入确实让小车按预期
+原地转。而"摇杆的哪个区域触发转向"是另一回事，并且今天改了：水平轴的优先级让给了
+垂直轴，现在只有摇杆垂直回到中位时向左右推才会转向。动作已验证，请求动作的新方式
+尚未验证。
+
 ### 下次实车任务
 
-1. 用重构后的脚本重跑 8 月 10 日的流程，确认行为完全一致。
-2. 架空四轮，首次实测原地左转和右转。
+1. 用重构后的脚本重跑全部已验证动作，确认行为完全一致。
+2. 按新映射复查转向：摇杆垂直回中后再向左右推。
 3. 行驶中关闭手柄电源，确认两路电机立即停止。
 4. 确认放宽后的死区不影响正常驾驶手感。

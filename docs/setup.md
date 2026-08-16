@@ -44,7 +44,8 @@ Find the main controller line containing both `eventX` and `js0`. Motion-sensor 
 - DualSense input detection: verified.
 - Left-side control from `ABS_Y`: verified.
 - Four-wheel forward, backward, and stop from `ABS_Y`: verified at 30% PWM.
-- `ABS_X` left/right spin-turn code: implemented, not physically verified.
+- Left/right spin turns: verified in a driving session after 2026-08-10.
+- Vertical-axis priority for requesting a turn: changed 2026-08-16, awaiting a confirmation run.
 - Disconnect fail-safe: implemented on 2026-08-16, not physically verified.
 - Automatic controller discovery: not implemented.
 

@@ -27,9 +27,9 @@ RoverPi 使用双层铝合金四驱底盘。下层放置四个电机、电机电
 - All four wheels completed a forward → stop → backward → stop sequence.
 - The four-wheel tests used 30% PWM and short controlled intervals.
 - The DualSense controlled four-wheel forward, backward, and stop.
-- Left/right spin turns remain **not physically verified**.
+- Left/right spin turns were verified in a later driving session: the rover spins in the commanded direction under gamepad control.
 
-以上前进、后退和停止均为实测结果。转向只完成代码实现，不能写成已完成的硬件功能。
+以上前进、后退和停止为 8 月 10 日实测结果；原地左右转在其后的一次驾驶中实测通过。
 
 ## Safety checklist
 

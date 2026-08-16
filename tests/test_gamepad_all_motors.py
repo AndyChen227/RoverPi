@@ -1,11 +1,12 @@
 """Drive all four motors from the DualSense left stick at 30% PWM.
 
-Forward, backward, and stop were physically verified on 2026-08-10.
-Left/right spin-turn logic is implemented but has NOT been physically tested.
+Forward, backward, and stop were physically verified on 2026-08-10. Spin left
+and spin right were physically verified in a later driving session.
 
 Changed on 2026-08-16 and awaiting a new physical run:
   - the dead zone widened from 20 to the shared 35 counts;
-  - the vertical axis now has priority over the horizontal axis;
+  - the vertical axis now has priority over the horizontal axis, so a turn is
+    requested only while the stick is vertically centered;
   - a disconnect watchdog stops both channels if the controller goes away.
 """
 
@@ -33,7 +34,8 @@ last_command = None
 
 rover_pins.warn_and_wait(
     "RoverPi full gamepad test.\n"
-    "WARNING: left/right turn behavior is not yet physically verified."
+    "NOTE: a turn is now requested by moving the stick sideways while it is\n"
+    "vertically centered. This mapping changed on 2026-08-16."
 )
 
 try:
@@ -62,8 +64,7 @@ try:
         # Print only on change so the console stays readable and the loop is
         # not slowed down by hundreds of identical lines per second.
         if command != last_command:
-            note = " (UNVERIFIED TURN)" if command.startswith("turn_") else ""
-            print(f"{command.upper()}{note} x={x} y={y}")
+            print(f"{command.upper()} x={x} y={y}")
             last_command = command
 
         COMMANDS[command]()
