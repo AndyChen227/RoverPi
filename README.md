@@ -73,7 +73,7 @@ Left motors + Right motors
 Forward · Backward · Turn · Stop
 ```
 
-Forward, backward, stop, and both spin turns are now physically verified. The immediate next milestone is confirming the disconnect fail-safe on the rover, followed by controller discovery and standalone operation without an active SSH session.
+Forward, backward, stop, both spin turns, and stop-on-disconnect are now physically verified, so the manually controlled mobile base behaves correctly and fails safely. The immediate next milestone is discovering the controller by identity instead of a fixed `eventX` path, followed by standalone operation without an active SSH session.
 
 <a id="project-status"></a>
 
@@ -108,7 +108,7 @@ flowchart LR
     E --> F["Gamepad FWD/REV/STOP<br/>✅"]
     F --> G["Spin turns<br/>✅"]
     G --> H["Disconnect fail-safe<br/>✅"]
-    H --> I["Controller discovery<br/>🧪 Next"]
+    H --> I["Controller discovery<br/>🔨 Next"]
     I --> J["Standalone, no SSH<br/>⏳"]
 
     classDef done fill:#166534,color:#fff,stroke:#22c55e,stroke-width:2px;
@@ -337,9 +337,13 @@ The detailed exit criteria for every phase are maintained in [`docs/roadmap.md`]
 
 ## 📓 Latest Development Log
 
-### August 16, 2026 — Safety consistency and shared modules
+### August 16, 2026 — Safety consistency, shared modules, and verification
 
 A code review found that the read-only rehearsal test and the test that drove all four wheels disagreed on both the dead zone and the rule for choosing an axis, that direction reversals flipped a pin while the motors were still turning, and that a dropped Bluetooth link left the last PWM command applied indefinitely. All four were fixed, and the duplicated pin definitions were extracted into `tests/rover_pins.py` and `tests/rover_input.py`. No verified pin state, sequence, or speed was changed.
+
+Everything was then run on the rover the same day with all four wheels lifted, and all of it passed. The result that matters most: powering the controller off mid-drive stopped all four wheels immediately, where the previous code would have kept driving until someone reached the power switch.
+
+The session also produced a debugging lesson worth keeping. The four-wheel test printed a correct sequence while nothing moved, immediately after both single-channel tests had passed — and the failing test was the only one using newly written code, which made the refactor look guilty. Re-running the original pre-refactor pin pattern failed the same way, which cleared the software: the inline fuse was loose, conducting well enough for two motors and dropping out under the inrush of four. See [`notes/debugging/loose-fuse-holder.md`](notes/debugging/loose-fuse-holder.md).
 
 ➡️ **[Read the full bilingual development log](docs/devlog/2026-08-16-safety-and-shared-modules.md)** · [previous log](docs/devlog/2026-08-10.md)
 
@@ -401,7 +405,7 @@ Raspberry Pi 5
 前进 · 后退 · 转向 · 停止
 ```
 
-目前前进、后退、停止和左右原地转向都已完成实体测试。下一项里程碑是在实车上确认断线安全停车，之后再完成手柄自动发现和无 SSH 独立运行。
+目前前进、后退、停止、左右原地转向和断线自动停车都已完成实体测试，也就是说手动遥控底盘既能正确动作，也能安全失效。下一项里程碑是按设备身份自动发现手柄、不再写死 `eventX`，之后再完成无 SSH 独立运行。
 
 ## 📊 项目状态
 
@@ -433,15 +437,16 @@ flowchart LR
     D --> E["四轮运动<br/>✅"]
     E --> F["手柄前进/后退/停止<br/>✅"]
     F --> G["原地左右转<br/>✅"]
-    G --> H["断线安全停车<br/>🧪 下一步"]
-    H --> I["无 SSH 独立运行<br/>⏳"]
+    G --> H["断线安全停车<br/>✅"]
+    H --> I["手柄自动发现<br/>🔨 下一步"]
+    I --> J["无 SSH 独立运行<br/>⏳"]
 
     classDef done fill:#166534,color:#fff,stroke:#22c55e,stroke-width:2px;
     classDef next fill:#92400e,color:#fff,stroke:#f59e0b,stroke-width:2px;
     classDef pending fill:#1f2937,color:#fff,stroke:#64748b,stroke-width:2px;
-    class A,B,C,D,E,F,G done;
-    class H next;
-    class I pending;
+    class A,B,C,D,E,F,G,H done;
+    class I next;
+    class J pending;
 ```
 
 ## 🧩 系统架构
@@ -653,9 +658,13 @@ flowchart LR
 
 ## 📓 最新开发日志
 
-### 2026 年 8 月 16 日——安全一致性与共享模块
+### 2026 年 8 月 16 日——安全一致性、共享模块与实车验证
 
 一次代码审查发现：只读预演脚本和真正驱动四轮的脚本在死区和选轴规则上并不一致；换向时会在电机仍在转动的瞬间翻转方向引脚；蓝牙断开后上一条 PWM 命令会一直保持。四个问题全部修复，并把重复的引脚定义抽取到 `tests/rover_pins.py` 与 `tests/rover_input.py`。所有已验证的引脚电平、运动顺序和速度均未改动。
+
+当天即在实车上完成全部验证，四轮架空，逐项通过。其中最关键的一项：行驶中关闭手柄电源，四个轮子立即停止——而旧代码在同样操作下会一直跑到有人去按总开关。
+
+这次还留下一条调试经验。两个单通道测试刚刚通过，四轮测试却打印全部正确而一个轮子不转，偏偏失败的这个是唯一走新代码的测试，看起来铁定是重构的锅。用重构前的原始写法重跑，同样不转，软件才被洗清：串联保险丝松了，两个电机的电流能导通，四个电机的启动浪涌下就断开。详见 [`notes/debugging/loose-fuse-holder.md`](notes/debugging/loose-fuse-holder.md)。
 
 ➡️ **[阅读完整中英双语开发日志](docs/devlog/2026-08-16-safety-and-shared-modules.md)** · [上一篇日志](docs/devlog/2026-08-10.md)
 
