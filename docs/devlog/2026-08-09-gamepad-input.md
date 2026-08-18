@@ -14,8 +14,8 @@ PS5 DualSense directional input parsing was successfully validated through
 The test tracks `ABS_X` and `ABS_Y`, using `CENTER = 128` and `DEAD_ZONE = 35`.
 The verified left-stick values were approximately:
 
-- X: left `0`, center `128`, right `225`
-- Y: up `0`, center `128`, down `225`
+- X: left `0`, center `128`, right `255`
+- Y: up `0`, center `128`, down `255`
 
 During this session, the main controller was available at
 `/dev/input/event11`. Linux event numbers can change after a reconnect or
@@ -36,8 +36,8 @@ the rover motors yet.
 测试程序持续记录 `ABS_X` 和 `ABS_Y`，并使用 `CENTER = 128` 与
 `DEAD_ZONE = 35`。左摇杆的实测值约为：
 
-- X：左 `0`、中间 `128`、右 `225`
-- Y：上 `0`、中间 `128`、下 `225`
+- X：左 `0`、中间 `128`、右 `255`
+- Y：上 `0`、中间 `128`、下 `255`
 
 本次会话中主控制器路径为 `/dev/input/event11`。Linux 的 event 编号在
 重新连接或重启后可能变化，因此不能把这个路径视为永久固定值。
