@@ -364,18 +364,22 @@ Everything was then run on the rover the same day. Tests 1–6 ran with all four
 
 The session also produced a debugging lesson worth keeping. The four-wheel test printed a correct sequence while nothing moved, immediately after both single-channel tests had passed — and the failing test was the only one using newly written code, which made the refactor look guilty. Re-running the original pre-refactor pin pattern failed the same way, which cleared the software: the inline fuse was loose, conducting well enough for two motors and dropping out under the inrush of four. See [`notes/debugging/loose-fuse-holder.md`](notes/debugging/loose-fuse-holder.md).
 
-➡️ **[Read the full bilingual development log](docs/devlog/2026-08-16-safety-and-shared-modules.md)** · [repository audit, August 18](docs/devlog/2026-08-18-repository-audit.md) · [previous log](docs/devlog/2026-08-10.md)
+➡️ **[Read the full bilingual development log](docs/devlog/2026-08-16-safety-and-shared-modules.md)** · [repository audit, August 18](docs/devlog/2026-08-18-repository-audit.md) · [lidar planning, August 18](docs/devlog/2026-08-18-sensor-planning.md) · [previous log](docs/devlog/2026-08-10.md)
 
 ## 🚀 Next Actions
 
-1. 🔎 Discover the DualSense by identity instead of fixed `eventX`.
-2. 🔌 Run safely without an active SSH session, and at planned startup.
-3. 📏 Measure open-loop straight-line tracking: hold forward over a fixed distance with no
+1. 📡 Bench-characterize the STP-23L over USB with no motors running: baud rate, frame
+   layout, accuracy against a tape measure, and behavior on dark and angled surfaces.
+2. 🔎 Discover the DualSense by identity instead of fixed `eventX`.
+3. 🛑 Add an obstacle stop that vetoes a forward command, with the braking distance at
+   30% PWM measured first so the threshold comes from data rather than a guess.
+4. 🔌 Run safely without an active SSH session, and at planned startup.
+5. 📏 Measure open-loop straight-line tracking: hold forward over a fixed distance with no
    steering correction and record the lateral deviation.
-4. 🎚️ Add analog differential mixing for smoother steering.
-5. 🧱 Extract the stable logic from `tests/` into a real `src/` control layer.
-6. 🔬 Begin Phase 2: read the wheel encoders — starting with encoder output voltage, because
-   Raspberry Pi 5 GPIO is not 5 V tolerant.
+6. 🎚️ Add analog differential mixing for smoother steering.
+7. 🧱 Extract the stable logic from `tests/` into a real `src/` control layer.
+8. 🔬 Begin Phase 2: read the wheel encoders — starting with encoder output voltage, because
+   Raspberry Pi 5 GPIO is not 5 V tolerant. This phase gates any trajectory plot.
 
 ## 💡 Engineering Principles
 
@@ -701,17 +705,20 @@ flowchart LR
 
 这次还留下一条调试经验。两个单通道测试刚刚通过，四轮测试却打印全部正确而一个轮子不转，偏偏失败的这个是唯一走新代码的测试，看起来铁定是重构的锅。用重构前的原始写法重跑，同样不转，软件才被洗清：串联保险丝松了，两个电机的电流能导通，四个电机的启动浪涌下就断开。详见 [`notes/debugging/loose-fuse-holder.md`](notes/debugging/loose-fuse-holder.md)。
 
-➡️ **[阅读完整中英双语开发日志](docs/devlog/2026-08-16-safety-and-shared-modules.md)** · [8 月 18 日仓库校对](docs/devlog/2026-08-18-repository-audit.md) · [上一篇日志](docs/devlog/2026-08-10.md)
+➡️ **[阅读完整中英双语开发日志](docs/devlog/2026-08-16-safety-and-shared-modules.md)** · [8 月 18 日仓库校对](docs/devlog/2026-08-18-repository-audit.md) · [8 月 18 日激光规划](docs/devlog/2026-08-18-sensor-planning.md) · [上一篇日志](docs/devlog/2026-08-10.md)
 
 ## 🚀 接下来要做什么
 
-1. 🔎 根据设备身份自动寻找 DualSense，不再写死 `eventX`。
-2. 🔌 验证无 SSH 连接和开机自启动时也能安全独立运行。
-3. 📏 实测开环直线性：固定距离内保持前进命令、不做任何修正，记录横向偏移。
-4. 🎚️ 加入模拟差速混合，实现更平滑的转向。
-5. 🧱 把 `tests/` 里稳定的逻辑提取成正式的 `src/` 控制层。
-6. 🔬 进入第 2 阶段：读取轮式编码器——先确认编码器输出电压，因为 Raspberry Pi 5 的
-   GPIO 不耐 5 V。
+1. 📡 在台面上标定 STP-23L：走 USB、不接电机，确定波特率、数据帧结构、卷尺实测精度，
+   以及对深色和斜面的表现。
+2. 🔎 根据设备身份自动寻找 DualSense，不再写死 `eventX`。
+3. 🛑 加入否决前进命令的障碍停车，先测出 30% PWM 下的制动距离，让阈值来自数据而不是猜测。
+4. 🔌 验证无 SSH 连接和开机自启动时也能安全独立运行。
+5. 📏 实测开环直线性：固定距离内保持前进命令、不做任何修正，记录横向偏移。
+6. 🎚️ 加入模拟差速混合，实现更平滑的转向。
+7. 🧱 把 `tests/` 里稳定的逻辑提取成正式的 `src/` 控制层。
+8. 🔬 进入第 2 阶段：读取轮式编码器——先确认编码器输出电压，因为 Raspberry Pi 5 的
+   GPIO 不耐 5 V。本阶段是轨迹图的前置条件。
 
 ## 💡 工程原则
 

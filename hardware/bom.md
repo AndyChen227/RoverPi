@@ -1,10 +1,11 @@
 # Bill of Materials / 物料清单
 
-Everything listed here is physically installed on the rover. Items that are
-planned but not yet purchased or mounted are kept in a separate section so this
-file never implies hardware that does not exist.
+Everything in the first table is physically installed on the rover. Hardware that
+has been acquired but not yet mounted, and hardware that is only planned, are kept
+in separate sections below, so this file never implies more than the rover actually
+carries.
 
-本清单只记录实际装在小车上的元件。计划购买但尚未安装的部分单独列出，避免让清单看起来比实车更完整。
+第一张表只记录实际装在小车上的元件。已购买但尚未安装的硬件、以及仅在计划中的硬件，分别列在下方独立小节，避免让清单看起来比实车更完整。
 
 ## Installed / 已安装
 
@@ -27,6 +28,21 @@ They belong to Phase 2 of the roadmap.
 
 第 3 项电机自带的编码器已经在车上，但尚未接到树莓派，属于路线图第 2 阶段。
 
+## Acquired, not yet installed / 已购买，尚未安装
+
+| Component | 元件 | Specification / 规格 | Qty | Intended role / 计划用途 |
+|---|---|---|---:|---|
+| Single-point lidar | 单点激光测距模块 | LDROBOT STP-23L, 0.07–7.5 m, 120 Hz, UART | 1 | Obstacle stop, then reactive escape |
+| USB serial adapter | USB 转串口模块 | CH9102F, with Type-C cable and 20 cm harness | 1 | Reads the lidar over USB, bypassing GPIO logic levels |
+
+Acquired 2026-08-18. Not yet mounted, not yet wired, not yet read. Intended
+position is the front center of the upper deck, level and pointing forward. See
+[`docs/devlog/2026-08-18-sensor-planning.md`](../docs/devlog/2026-08-18-sensor-planning.md)
+for what it can and cannot do, and why the first feature is an obstacle stop
+rather than obstacle avoidance.
+
+2026-08-18 购入。尚未安装、尚未接线、尚未读取数据。计划安装位置为上层平台车头正中，水平朝前。它能做什么、不能做什么，以及为什么第一个功能是障碍停车而不是自动避障，见上述开发日志。
+
 ## Power domains / 供电区域
 
 | Domain | Source | Note |
@@ -42,8 +58,8 @@ They belong to Phase 2 of the roadmap.
 
 ## Planned, not yet purchased / 计划中，尚未购买
 
-| Component | 元件 | Phase |
-|---|---|---|
-| Distance sensors | 测距传感器 | Phase 4 |
-| IMU | 惯性测量单元 | Phase 4 |
-| Raspberry Pi camera | 树莓派摄像头 | Phase 5 |
+| Component | 元件 | Phase | Note |
+|---|---|---|---|
+| Servo for lidar sweep | 激光扫描舵机 | Phase 4 | Deliberately deferred until the fixed sensor shows where it falls short |
+| IMU | 惯性测量单元 | Phase 4 | Decide from the heading error measured in the Phase 3 square test |
+| Raspberry Pi camera | 树莓派摄像头 | Phase 5 | — |
