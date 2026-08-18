@@ -142,9 +142,10 @@ def backward(speed=SPEED):
 def turn_left(speed=SPEED):
     """Spin left: left side backward, right side forward.
 
-    The pin combination is physically verified: the rover spins left when
-    these four direction inputs are applied. Which stick region requests the
-    turn changed on 2026-08-16 and awaits a confirmation run.
+    Fully verified. The pin combination was confirmed in a driving session
+    after 2026-08-10: the rover spins left when these four direction inputs
+    are applied. The dominant-axis stick region that requests the turn was
+    confirmed separately on 2026-08-16, on the ground.
     """
     _apply("turn_left", LEFT_BACKWARD, RIGHT_FORWARD, speed)
 
@@ -152,8 +153,8 @@ def turn_left(speed=SPEED):
 def turn_right(speed=SPEED):
     """Spin right: left side forward, right side backward.
 
-    Physically verified in the same session as turn_left(). See the note there
-    about the changed stick mapping.
+    Physically verified in the same sessions as turn_left(), including the
+    2026-08-16 ground drive under the dominant-axis rule.
     """
     _apply("turn_right", LEFT_FORWARD, RIGHT_BACKWARD, speed)
 

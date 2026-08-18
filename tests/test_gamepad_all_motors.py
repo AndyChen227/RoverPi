@@ -3,11 +3,16 @@
 Forward, backward, and stop were physically verified on 2026-08-10. Spin left
 and spin right were physically verified in a later driving session.
 
-Changed on 2026-08-16 and awaiting a new physical run:
+Changed on 2026-08-16, and all three verified on the rover the same day:
   - the dead zone widened from 20 to the shared 35 counts;
   - the dominant axis now decides the command, so a mostly-forward push
     drives forward and a mostly-sideways push turns;
   - a disconnect watchdog stops both channels if the controller goes away.
+
+This is the one test that has been run on the ground rather than with the
+wheels lifted: an indoor wood floor, 30% PWM, about ten continuous minutes,
+including powering the controller off mid-drive. Run it in the air first
+after any change, and only then on the floor.
 """
 
 import rover_input

@@ -73,13 +73,13 @@ Left motors + Right motors
 Forward · Backward · Turn · Stop
 ```
 
-Forward, backward, stop, both spin turns, and stop-on-disconnect are now physically verified, so the manually controlled mobile base behaves correctly and fails safely. The immediate next milestone is discovering the controller by identity instead of a fixed `eventX` path, followed by standalone operation without an active SSH session.
+Forward, backward, stop, both spin turns, and stop-on-disconnect are physically verified — and since August 16 they are verified **on the ground**, not only with the wheels lifted. About ten continuous minutes of wood-floor driving at 30% PWM produced no surprises, and the disconnect fail-safe was triggered mid-drive with the rover carrying its own weight. The manually controlled mobile base therefore behaves correctly and fails safely under real load. The immediate next milestone is discovering the controller by identity instead of a fixed `eventX` path, followed by standalone operation without an active SSH session.
 
 <a id="project-status"></a>
 
 ## 📊 Project Status
 
-**Last updated: August 16, 2026**
+**Last updated: August 18, 2026**
 
 | Area | Status | What is true today |
 |---|:---:|---|
@@ -91,9 +91,10 @@ Forward, backward, stop, both spin turns, and stop-on-disconnect are now physica
 | Four-wheel movement | ✅ Verified | Forward → stop → backward → stop sequence completed |
 | DualSense input | ✅ Verified | Bluetooth, Linux input, and Python `evdev` data validated |
 | DualSense driving | ✅ Verified | Forward, backward, stop, and both spin turns driven from the controller |
-| Left/right turning | ✅ Verified | Differential spin turns confirmed on the rover after August 10 |
+| Left/right turning | ✅ Verified | First confirmed after August 10; re-verified on the ground on August 16 under the dominant-axis rule |
 | Controller discovery | ⏳ Pending | Current tests still require the active `/dev/input/eventX` path |
-| Disconnect fail-safe | ✅ Verified | Controller powered off mid-drive; both channels stopped immediately |
+| Disconnect fail-safe | ✅ Verified | Controller powered off mid-drive **on the ground** at 30% PWM; all four wheels stopped immediately |
+| Ground driving | ✅ Verified | About 10 continuous minutes on an indoor wood floor at 30% PWM |
 | Encoder feedback | 🗓️ Planned | Wheel direction, RPM, distance, and odometry |
 | Autonomous navigation | 🔭 Future | Added after the mobile base is dependable |
 
@@ -108,13 +109,14 @@ flowchart LR
     E --> F["Gamepad FWD/REV/STOP<br/>✅"]
     F --> G["Spin turns<br/>✅"]
     G --> H["Disconnect fail-safe<br/>✅"]
-    H --> I["Controller discovery<br/>🔨 Next"]
+    H --> K["10-min ground drive<br/>✅"]
+    K --> I["Controller discovery<br/>🔨 Next"]
     I --> J["Standalone, no SSH<br/>⏳"]
 
     classDef done fill:#166534,color:#fff,stroke:#22c55e,stroke-width:2px;
     classDef next fill:#92400e,color:#fff,stroke:#f59e0b,stroke-width:2px;
     classDef pending fill:#1f2937,color:#fff,stroke:#64748b,stroke-width:2px;
-    class A,B,C,D,E,F,G,H done;
+    class A,B,C,D,E,F,G,H,K done;
     class I next;
     class J pending;
 ```
@@ -241,9 +243,12 @@ Two shared modules hold everything that used to be copied into all seven tests:
 | `test_gamepad_all_motors.py` | Full left-stick driving | ✅ Verified |
 
 > [!NOTE]
-> Every entry above was re-confirmed on the rover on August 16, after the
-> safety changes (single dead zone, dominant-axis rule, protected reversal,
-> disconnect watchdog). See [`tests/README.md`](tests/README.md).
+> Every entry above except `test_gamepad_motor_left.py` was re-confirmed on the
+> rover on August 16, after the safety changes (single dead zone, dominant-axis
+> rule, protected reversal, disconnect watchdog). That one test still carries its
+> August 10 result and has not been re-run since the dead zone widened.
+> `test_gamepad_all_motors.py` was the only test run **on the ground**; the others
+> were run with all four wheels lifted. See [`tests/README.md`](tests/README.md).
 
 > [!WARNING]
 > These are manual hardware tests, not ordinary automated unit tests. Read [`tests/README.md`](tests/README.md), lift all wheels, verify the current event path, and inspect wiring before running them.
@@ -264,7 +269,14 @@ Two shared modules hold everything that used to be copied into all seven tests:
 - the dominant-axis rule, so a mostly-forward push drives forward and a mostly-sideways push turns;
 - a 50 ms zero-power pause before every direction reversal;
 - **stop-on-disconnect**: powering the controller off mid-drive stopped all four wheels immediately;
-- the refactored scripts reproducing every movement verified before the refactor.
+- the refactored scripts reproducing every movement verified before the refactor;
+- **about 10 continuous minutes of ground driving** on an indoor wood floor at 30% PWM, using
+  `test_gamepad_all_motors.py`: forward, backward, stop, and both spin turns all behaved on the
+  ground as they had with the wheels lifted;
+- **spin turns under floor friction**: the rover rotates cleanly in place on wood, without the
+  binding that a four-wheel skid-steer platform can show;
+- **the disconnect fail-safe on the ground**, with the rover moving under its own weight rather
+  than free-spinning in the air.
 
 ### ⏳ Not implemented yet
 
@@ -272,6 +284,13 @@ Two shared modules hold everything that used to be copied into all seven tests:
 - stale-input timeout (a held stick emits no events, so this needs its own test);
 - analog tank mixing for smooth turns;
 - production startup and no-SSH standalone operation.
+
+### ⚠️ Observed but not yet measured
+
+No drift was noticed during the ground drive, but the operator was steering throughout, so a
+human was closing the loop. Open-loop straight-line tracking is therefore **not** an established
+result: it needs a fixed-distance run with the command held forward and no steering correction,
+with the lateral deviation actually measured.
 
 ## 🗂️ Repository Map
 
@@ -341,20 +360,22 @@ The detailed exit criteria for every phase are maintained in [`docs/roadmap.md`]
 
 A code review found that the read-only rehearsal test and the test that drove all four wheels disagreed on both the dead zone and the rule for choosing an axis, that direction reversals flipped a pin while the motors were still turning, and that a dropped Bluetooth link left the last PWM command applied indefinitely. All four were fixed, and the duplicated pin definitions were extracted into `tests/rover_pins.py` and `tests/rover_input.py`. No verified pin state, sequence, or speed was changed.
 
-Everything was then run on the rover the same day with all four wheels lifted, and all of it passed. The result that matters most: powering the controller off mid-drive stopped all four wheels immediately, where the previous code would have kept driving until someone reached the power switch.
+Everything was then run on the rover the same day. Tests 1–6 ran with all four wheels lifted; the full gamepad driving test was then run **on the ground**, for about ten continuous minutes on an indoor wood floor at 30% PWM. Forward, backward, stop, and both spin turns behaved on the floor as they had in the air, and the rover rotated in place cleanly under real friction. The result that matters most: powering the controller off mid-drive — on the ground, with the rover carrying its own weight — stopped all four wheels immediately, where the previous code would have kept driving until someone reached the power switch.
 
 The session also produced a debugging lesson worth keeping. The four-wheel test printed a correct sequence while nothing moved, immediately after both single-channel tests had passed — and the failing test was the only one using newly written code, which made the refactor look guilty. Re-running the original pre-refactor pin pattern failed the same way, which cleared the software: the inline fuse was loose, conducting well enough for two motors and dropping out under the inrush of four. See [`notes/debugging/loose-fuse-holder.md`](notes/debugging/loose-fuse-holder.md).
 
-➡️ **[Read the full bilingual development log](docs/devlog/2026-08-16-safety-and-shared-modules.md)** · [previous log](docs/devlog/2026-08-10.md)
+➡️ **[Read the full bilingual development log](docs/devlog/2026-08-16-safety-and-shared-modules.md)** · [repository audit, August 18](docs/devlog/2026-08-18-repository-audit.md) · [previous log](docs/devlog/2026-08-10.md)
 
 ## 🚀 Next Actions
 
 1. 🔎 Discover the DualSense by identity instead of fixed `eventX`.
 2. 🔌 Run safely without an active SSH session, and at planned startup.
-3. 🎚️ Add analog differential mixing for smoother steering.
-4. 🛞 Move from wheels-lifted testing to a controlled ground drive.
+3. 📏 Measure open-loop straight-line tracking: hold forward over a fixed distance with no
+   steering correction and record the lateral deviation.
+4. 🎚️ Add analog differential mixing for smoother steering.
 5. 🧱 Extract the stable logic from `tests/` into a real `src/` control layer.
-6. 🔬 Begin Phase 2: read the wheel encoders.
+6. 🔬 Begin Phase 2: read the wheel encoders — starting with encoder output voltage, because
+   Raspberry Pi 5 GPIO is not 5 V tolerant.
 
 ## 💡 Engineering Principles
 
@@ -405,11 +426,11 @@ Raspberry Pi 5
 前进 · 后退 · 转向 · 停止
 ```
 
-目前前进、后退、停止、左右原地转向和断线自动停车都已完成实体测试，也就是说手动遥控底盘既能正确动作，也能安全失效。下一项里程碑是按设备身份自动发现手柄、不再写死 `eventX`，之后再完成无 SSH 独立运行。
+前进、后退、停止、左右原地转向和断线自动停车都已完成实体测试——并且从 8 月 16 日起，这些验证是在**地面**上完成的，不再只是架空。当天在室内木地板上以 30% PWM 连续行驶约 10 分钟，没有出现意外，断线安全停车也是在小车承载自身重量、正在行进的状态下触发的。也就是说，手动遥控底盘在真实负载下既能正确动作，也能安全失效。下一项里程碑是按设备身份自动发现手柄、不再写死 `eventX`，之后再完成无 SSH 独立运行。
 
 ## 📊 项目状态
 
-**最后更新：2026 年 8 月 16 日**
+**最后更新：2026 年 8 月 18 日**
 
 | 部分 | 状态 | 当前真实情况 |
 |---|:---:|---|
@@ -421,9 +442,10 @@ Raspberry Pi 5
 | 四轮联动 | ✅ 已验证 | 已完成前进 → 停止 → 后退 → 停止 |
 | DualSense 输入 | ✅ 已验证 | 蓝牙、Linux 输入与 Python `evdev` 均已验证 |
 | DualSense 驾驶 | ✅ 已验证 | 手柄控制前进、后退、停止与左右原地转向均已实测 |
-| 左右转向 | ✅ 已验证 | 8 月 10 日之后的一次驾驶中确认差速原地转向 |
+| 左右转向 | ✅ 已验证 | 8 月 10 日后首次确认；8 月 16 日在地面按主导轴规则重新验证 |
 | 手柄自动发现 | ⏳ 待完成 | 当前仍需填写本次连接的 `/dev/input/eventX` |
-| 断线安全停车 | ✅ 已验证 | 行驶中关闭手柄电源，两路电机立即停止 |
+| 断线安全停车 | ✅ 已验证 | **地面** 30% PWM 行驶中关闭手柄电源，四轮立即停止 |
+| 地面行驶 | ✅ 已验证 | 室内木地板，30% PWM，连续约 10 分钟 |
 | 编码器反馈 | 🗓️ 已规划 | 测量方向、转速、距离与里程 |
 | 自主导航 | 🔭 未来阶段 | 移动底盘可靠后再加入 |
 
@@ -438,13 +460,14 @@ flowchart LR
     E --> F["手柄前进/后退/停止<br/>✅"]
     F --> G["原地左右转<br/>✅"]
     G --> H["断线安全停车<br/>✅"]
-    H --> I["手柄自动发现<br/>🔨 下一步"]
+    H --> K["10 分钟地面行驶<br/>✅"]
+    K --> I["手柄自动发现<br/>🔨 下一步"]
     I --> J["无 SSH 独立运行<br/>⏳"]
 
     classDef done fill:#166534,color:#fff,stroke:#22c55e,stroke-width:2px;
     classDef next fill:#92400e,color:#fff,stroke:#f59e0b,stroke-width:2px;
     classDef pending fill:#1f2937,color:#fff,stroke:#64748b,stroke-width:2px;
-    class A,B,C,D,E,F,G,H done;
+    class A,B,C,D,E,F,G,H,K done;
     class I next;
     class J pending;
 ```
@@ -567,8 +590,10 @@ Linux 会动态分配 `/dev/input/eventX`。`event11` 只在某一次实测连�
 | `test_gamepad_all_motors.py` | 左摇杆控制全部四轮 | ✅ 已验证 |
 
 > [!NOTE]
-> 上表每一项都已在 8 月 16 日安全改动（统一死区、主导轴规则、换向保护、断线看门狗）
-> 之后于实车上重新确认。详见 [`tests/README.md`](tests/README.md)。
+> 除 `test_gamepad_motor_left.py` 外，上表每一项都已在 8 月 16 日安全改动（统一死区、
+> 主导轴规则、换向保护、断线看门狗）之后于实车上重新确认。那一项仍沿用 8 月 10 日的
+> 结果，死区放宽后未再重跑。其中只有 `test_gamepad_all_motors.py` 是在**地面**上运行的，
+> 其余均为四轮架空。详见 [`tests/README.md`](tests/README.md)。
 
 > [!WARNING]
 > 这些是手动硬件测试，不是普通自动单元测试。运行前必须阅读 [`tests/README.md`](tests/README.md)、架空四轮、确认当前手柄 event 路径并检查所有接线。
@@ -587,7 +612,11 @@ Linux 会动态分配 `/dev/input/eventX`。`event11` 只在某一次实测连�
 - 主导轴规则：偏前推就前进，偏横推就转向，斜推不再误触发；
 - 每次换向前先把两路 PWM 归零并等待 50 毫秒；
 - **手柄断线自动停车**：行驶中关闭手柄电源，四轮立即停止；
-- 重构后的脚本复现了重构前验证过的全部动作。
+- 重构后的脚本复现了重构前验证过的全部动作；
+- **连续约 10 分钟地面行驶**：室内木地板、30% PWM，使用 `test_gamepad_all_motors.py`，
+  前进、后退、停止与左右原地转在地面上的表现与架空一致；
+- **地面摩擦下的原地转向**：小车在木地板上能干脆地原地旋转，没有出现四轮滑移底盘常见的卡滞；
+- **地面状态下的断线安全停车**：小车承载自身重量行进中断线，而非架空空转。
 
 ### ⏳ 尚未实现
 
@@ -595,6 +624,12 @@ Linux 会动态分配 `/dev/input/eventX`。`event11` 只在某一次实测连�
 - 输入超时停车（摇杆保持不动时手柄不发事件，需要单独实测确认）；
 - 模拟差速混合与平滑转向；
 - 正式开机启动和无 SSH 独立运行。
+
+### ⚠️ 观察到但尚未测量
+
+地面行驶过程中没有发现跑偏，但全程有人在打方向，也就是说闭环是由操作者完成的。因此
+**不能**据此认定开环直线性良好：需要一次固定距离、命令保持前进、不做任何修正的实测，
+并真正测量横向偏移量。
 
 ## 🗂️ 仓库结构
 
@@ -662,20 +697,21 @@ flowchart LR
 
 一次代码审查发现：只读预演脚本和真正驱动四轮的脚本在死区和选轴规则上并不一致；换向时会在电机仍在转动的瞬间翻转方向引脚；蓝牙断开后上一条 PWM 命令会一直保持。四个问题全部修复，并把重复的引脚定义抽取到 `tests/rover_pins.py` 与 `tests/rover_input.py`。所有已验证的引脚电平、运动顺序和速度均未改动。
 
-当天即在实车上完成全部验证，四轮架空，逐项通过。其中最关键的一项：行驶中关闭手柄电源，四个轮子立即停止——而旧代码在同样操作下会一直跑到有人去按总开关。
+当天即在实车上完成全部验证。第 1 到第 6 项为四轮架空运行；随后完整手柄驾驶测试在**地面**上进行，室内木地板、30% PWM、连续约 10 分钟。前进、后退、停止与左右原地转在地面上的表现与架空一致，真实摩擦下也能干脆地原地旋转。其中最关键的一项：在地面上、小车承载自身重量行进中关闭手柄电源，四个轮子立即停止——而旧代码在同样操作下会一直跑到有人去按总开关。
 
 这次还留下一条调试经验。两个单通道测试刚刚通过，四轮测试却打印全部正确而一个轮子不转，偏偏失败的这个是唯一走新代码的测试，看起来铁定是重构的锅。用重构前的原始写法重跑，同样不转，软件才被洗清：串联保险丝松了，两个电机的电流能导通，四个电机的启动浪涌下就断开。详见 [`notes/debugging/loose-fuse-holder.md`](notes/debugging/loose-fuse-holder.md)。
 
-➡️ **[阅读完整中英双语开发日志](docs/devlog/2026-08-16-safety-and-shared-modules.md)** · [上一篇日志](docs/devlog/2026-08-10.md)
+➡️ **[阅读完整中英双语开发日志](docs/devlog/2026-08-16-safety-and-shared-modules.md)** · [8 月 18 日仓库校对](docs/devlog/2026-08-18-repository-audit.md) · [上一篇日志](docs/devlog/2026-08-10.md)
 
 ## 🚀 接下来要做什么
 
 1. 🔎 根据设备身份自动寻找 DualSense，不再写死 `eventX`。
 2. 🔌 验证无 SSH 连接和开机自启动时也能安全独立运行。
-3. 🎚️ 加入模拟差速混合，实现更平滑的转向。
-4. 🛞 从架空测试过渡到受控的地面行驶。
+3. 📏 实测开环直线性：固定距离内保持前进命令、不做任何修正，记录横向偏移。
+4. 🎚️ 加入模拟差速混合，实现更平滑的转向。
 5. 🧱 把 `tests/` 里稳定的逻辑提取成正式的 `src/` 控制层。
-6. 🔬 进入第 2 阶段：读取轮式编码器。
+6. 🔬 进入第 2 阶段：读取轮式编码器——先确认编码器输出电压，因为 Raspberry Pi 5 的
+   GPIO 不耐 5 V。
 
 ## 💡 工程原则
 

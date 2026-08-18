@@ -29,12 +29,23 @@ RoverPi 使用双层铝合金四驱底盘。下层放置四个电机、电机电
 - The DualSense controlled four-wheel forward, backward, and stop.
 - Left/right spin turns were verified in a later driving session: the rover spins in the commanded direction under gamepad control.
 
+## Verified physical behavior — August 16, 2026 (ground drive)
+
+- The full gamepad driving test ran on an indoor wood floor at 30% PWM for about ten continuous minutes.
+- Forward, backward, stop, and both spin turns behaved on the ground as they had with the wheels lifted.
+- The rover rotates in place cleanly under floor friction, without the binding a four-wheel skid-steer platform can show.
+- The disconnect fail-safe was triggered mid-drive on the ground: all four wheels stopped immediately.
+- No drift was noticed on straight runs, but the operator was steering throughout, so open-loop straight-line tracking remains unmeasured.
+
 以上前进、后退和停止为 8 月 10 日实测结果；原地左右转在其后的一次驾驶中实测通过。
+8 月 16 日的完整手柄驾驶测试在室内木地板上以 30% PWM 连续行驶约 10 分钟，地面表现与架空一致，
+地面摩擦下能干脆原地旋转，断线安全停车也在地面行驶中验证通过。直线未见跑偏，但全程有人打方向，
+开环直线性仍未测量。
 
 ## Safety checklist
 
 1. Inspect LiPo condition, fuse, switch, polarity, insulation, and cable strain relief.
-2. Lift all wheels before a new or changed motor test.
+2. Lift all wheels before a new or changed motor test. Ground driving is only for sequences already verified in the air.
 3. Confirm the BCM pin map and current DualSense event path.
 4. Start stopped and keep the documented three-second warning delay.
 5. Use 30% PWM until the next stage is separately validated.

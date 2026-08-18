@@ -44,9 +44,11 @@ Find the main controller line containing both `eventX` and `js0`. Motion-sensor 
 - DualSense input detection: verified.
 - Left-side control from `ABS_Y`: verified.
 - Four-wheel forward, backward, and stop from `ABS_Y`: verified at 30% PWM.
-- Left/right spin turns: verified in a driving session after 2026-08-10.
+- Left/right spin turns: verified in a driving session after 2026-08-10, and re-verified on the ground 2026-08-16.
 - Dominant-axis rule for choosing a command: unified and verified 2026-08-16.
-- Disconnect fail-safe: verified 2026-08-16 by powering the controller off mid-drive.
+- Disconnect fail-safe: verified 2026-08-16 by powering the controller off mid-drive, on the ground.
+- Ground driving: verified 2026-08-16, about 10 continuous minutes on an indoor wood floor at 30% PWM.
+- Open-loop straight-line tracking: not measured; the operator was steering during the ground drive.
 - Automatic controller discovery: not implemented.
 
 The shared dead zone is 35 counts either side of `128`, so the driving range is

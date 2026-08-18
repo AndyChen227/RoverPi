@@ -3,12 +3,26 @@
 ## 2026 年 8 月 16 日——安全一致性与共享模块
 
 No hardware changed in this session. This was a code review of everything
-written between August 6 and August 10, plus the fixes that review produced.
-Nothing was physically re-tested, so every change below is recorded as
-implemented but unverified.
+written between August 6 and August 10, the fixes that review produced, and
+then a physical verification session on the rover the same day. Tests 1–6 ran
+with all four wheels lifted; the full gamepad driving test ran **on the
+ground** for about ten continuous minutes. Results are in
+[Verification session](#verification-session--same-day).
 
-本次没有改动任何硬件，只做了 8 月 6 日到 8 月 10 日全部代码的复查与修复。所有改动
-都没有在实车上重新运行，因此一律记为"已实现、未验证"。
+> [!NOTE]
+> This paragraph originally said nothing had been physically re-tested. It was
+> written before the verification session and was never updated afterwards, so
+> for two days the log opened by contradicting its own results. Corrected on
+> August 18 — see [`2026-08-18-repository-audit.md`](2026-08-18-repository-audit.md).
+
+本次没有改动任何硬件，只做了 8 月 6 日到 8 月 10 日全部代码的复查与修复，并在当天
+于实车上完成验证。第 1 到第 6 项为四轮架空运行，完整手柄驾驶测试则在**地面**上连续
+行驶约 10 分钟。结果见下方验证测试一节。
+
+> [!NOTE]
+> 这一段原本写的是"所有改动都没有在实车上重新运行"。那句话写于上车验证之前，验证
+> 完成后忘了回头修改，导致本文开头连续两天在否定自己的实测结果。已于 8 月 18 日
+> 更正，见 [`2026-08-18-repository-audit.md`](2026-08-18-repository-audit.md)。
 
 ---
 
@@ -120,7 +134,9 @@ rule. The movement is verified; the new way of asking for it is not.
 
 ### Verification session — same day
 
-Everything above was then run on the rover with all four wheels lifted.
+Everything above was then run on the rover. Tests 1–6 ran with all four wheels
+lifted. The final test, `test_gamepad_all_motors.py`, was run **on the ground**:
+an indoor wood floor, 30% PWM, about ten continuous minutes of driving.
 
 | Check | Result |
 |---|---|
@@ -132,12 +148,23 @@ Everything above was then run on the rover with all four wheels lifted.
 | `test_motor_channel1.py` — corrected forward polarity | ✅ left side ran rover-forward |
 | Channel 2 forward and backward | ✅ |
 | `test_all_motors.py` — four wheels | ✅ after a hardware fault, see below |
-| `test_gamepad_all_motors.py` — full driving | ✅ forward, backward, stop, both spin turns |
-| **Disconnect watchdog while driving** | ✅ all four wheels stopped immediately |
+| `test_gamepad_all_motors.py` — full driving, **on the ground** | ✅ forward, backward, stop, both spin turns |
+| Ground drive endurance | ✅ about 10 continuous minutes on wood floor at 30% PWM |
+| Spin turns under floor friction | ✅ rotates in place cleanly, no binding |
+| Straight-line behavior | ✅ no drift noticed — but see the boundary note below |
+| **Disconnect watchdog while driving, on the ground** | ✅ all four wheels stopped immediately |
 
-The disconnect watchdog is the result that matters most. Under the previous
-`read_loop()` the same action left the last PWM command applied and the rover
-would have kept driving until someone reached the power switch.
+The disconnect watchdog is the result that matters most, and it was triggered on
+the ground rather than in the air — with the rover carrying its own weight and
+real momentum, not four wheels free-spinning. Under the previous `read_loop()`
+the same action left the last PWM command applied and the rover would have kept
+driving until someone reached the power switch.
+
+**Boundary on the straight-line result.** No drift was noticed, but the operator
+was steering the whole time, so a human was closing the loop. This is not
+evidence of open-loop straight-line tracking. Establishing that needs a
+fixed-distance run with the forward command held and no steering correction, with
+the lateral deviation measured rather than eyeballed.
 
 ### The four-wheel test that was not a code bug
 
@@ -162,7 +189,8 @@ state was not added. Revisit only if a real drive stutters on diagonals.
 
 1. Discover the controller by identity instead of the fixed `event11` path.
 2. Run without an active SSH session, then at planned startup.
-3. Move from wheels-lifted testing to a controlled ground drive.
+3. Measure open-loop straight-line tracking over a fixed distance with no
+   steering correction.
 
 ---
 
@@ -254,7 +282,8 @@ PWM 归零并等待 50 毫秒，并跳过重复写入已经生效的命令。
 
 ### 当天的验证测试
 
-上述改动当天就在实车上跑完了，全程四轮架空。
+上述改动当天就在实车上跑完了。第 1 到第 6 项为四轮架空；最后一项
+`test_gamepad_all_motors.py` 在**地面**上运行：室内木地板、30% PWM、连续约 10 分钟。
 
 | 检查项 | 结果 |
 |---|---|
@@ -266,11 +295,19 @@ PWM 归零并等待 50 毫秒，并跳过重复写入已经生效的命令。
 | `test_motor_channel1.py` 修正后的前进极性 | ✅ 左侧朝小车前进方向转 |
 | Channel 2 前进与后退 | ✅ |
 | `test_all_motors.py` 四轮 | ✅ 期间遇到一次硬件故障，见下 |
-| `test_gamepad_all_motors.py` 完整驾驶 | ✅ 前进、后退、停止、左右原地转 |
-| **行驶中断线停车** | ✅ 四轮立即停止 |
+| `test_gamepad_all_motors.py` 完整驾驶（**地面**） | ✅ 前进、后退、停止、左右原地转 |
+| 地面连续行驶 | ✅ 木地板 30% PWM 连续约 10 分钟 |
+| 地面摩擦下原地转向 | ✅ 干脆旋转，无卡滞 |
+| 直线行驶 | ✅ 未观察到跑偏——但见下方边界说明 |
+| **地面行驶中断线停车** | ✅ 四轮立即停止 |
 
-其中最重要的是最后一项。旧的 `read_loop()` 在同样操作下会保持上一条 PWM 命令，小车
+其中最重要的是最后一项，而且它是在地面上触发的，不是架空——小车承载自身重量、带着真实
+惯性，而不是四个轮子空转。旧的 `read_loop()` 在同样操作下会保持上一条 PWM 命令，小车
 会一直跑到有人去按总开关。
+
+**关于直线行驶结果的边界。** 没有观察到跑偏，但全程有人在打方向，闭环其实是操作者完成的。
+因此这不能作为开环直线性的证据。要确立这一点，需要一次固定距离、保持前进命令、不做任何
+修正的实测，并真正测量横向偏移，而不是靠肉眼判断。
 
 ### 那次"四轮不转"其实不是代码问题
 
@@ -291,4 +328,4 @@ PWM 归零并等待 50 毫秒，并跳过重复写入已经生效的命令。
 
 1. 按设备身份自动发现手柄，不再写死 `event11`。
 2. 验证无 SSH 连接时运行，再做开机自启动。
-3. 从架空测试过渡到受控的地面行驶。
+3. 实测开环直线性：固定距离内不做任何修正，测量横向偏移。

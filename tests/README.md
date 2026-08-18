@@ -40,10 +40,15 @@ are stable enough to deserve a reusable control layer.
 | 4 | `test_motor_channel2.py` | Right side forward for one second | Verified 2026-08-16 |
 | 5 | `test_motor_channel2_backward.py` | Right side backward for one second | Verified 2026-08-16 |
 | 6 | `test_all_motors.py` | Four-wheel forward/stop/backward/stop | Verified 2026-08-16 |
-| 7 | `test_gamepad_all_motors.py` | Full left-stick driving test | Verified 2026-08-16: forward, backward, stop, both spin turns, and stop-on-disconnect |
+| 7 | `test_gamepad_all_motors.py` | Full left-stick driving test | Verified 2026-08-16 **on the ground**: forward, backward, stop, both spin turns, and stop-on-disconnect, over about 10 continuous minutes on wood floor |
 
 Only entry 3 has not been re-run since the August 16 changes; every other line
 was confirmed on the rover that day.
+
+Entries 1–6 were run with all four wheels lifted. Entry 7 was run on the ground:
+an indoor wood floor at 30% PWM for about ten continuous minutes, including the
+mid-drive disconnect test. Ground driving is therefore a completed milestone, not
+a pending one.
 
 Run a test from the repository root, for example:
 
@@ -99,16 +104,23 @@ only if a real drive produces stuttering on diagonals.
 
 - Every Python file keeps detailed teaching comments alongside the verified pin
   states, 30% PWM, timing, thresholds, and movement priority.
-- The turn functions in `rover_pins.py` have verified pin combinations, but the
-  stick region that requests a turn changed on August 16 and awaits a run.
+- The turn functions in `rover_pins.py` are fully verified: the pin combinations
+  were confirmed in a driving session after August 10, and the dominant-axis
+  stick region that requests them was confirmed on the ground on August 16.
+- No drift was noticed during the ground drive, but the operator was steering
+  throughout, so open-loop straight-line tracking is still unmeasured.
 - The fixed `/dev/input/event11` value documents the verified session but must
   be changed when Linux assigns a different number. Automatic controller
   discovery is still not implemented.
 - These tests do not yet implement production startup behavior or standalone
   operation without an SSH session.
 
-这些脚本用于手动硬件验证，不是自动单元测试。运行前必须架空轮子并确认当前手柄
-`eventX`。前进、后退、停止和原地左右转都已实测通过。
+这些脚本用于手动硬件验证，不是自动单元测试。首次运行或改动后必须架空轮子并确认当前
+手柄 `eventX`。前进、后退、停止和原地左右转都已实测通过。
+
+第 1 到第 6 项为四轮架空运行；第 7 项 `test_gamepad_all_motors.py` 已在**地面**上运行
+——室内木地板、30% PWM、连续约 10 分钟，其中包含行驶中断线停车测试。地面行驶已是完成
+项，不再是待办项。直线未见跑偏，但全程有人打方向，开环直线性仍未测量。
 
 2026-08-16 的改动统一了死区（35）与选轴规则（主导轴优先，取自预演脚本）、为换向
 加入 50 毫秒断电保护、并加入手柄断线自动停车。这些改动当天已在实车上全部重新运行

@@ -42,8 +42,8 @@ Because the left and right motors face opposite directions, their rover-forward 
 
 All five rows above have now passed low-speed physical tests at 30% PWM. Forward, backward, and stop were verified on August 10, 2026; spin left and spin right were verified in a driving session after that date.
 
-What the turn rows confirm is the *pin combination*: with those four direction inputs, the rover spins in the stated direction. Which stick region requests a turn is a separate question, and it changed on August 16 when absolute horizontal priority was replaced by the dominant-axis rule. See [`tests/README.md`](../tests/README.md).
+Two separate things had to be confirmed for the turn rows. The first is the *pin combination*: with those four direction inputs, the rover spins in the stated direction — verified in the post–August 10 driving session. The second is *which stick region requests a turn*, which changed on August 16 when absolute horizontal priority was replaced by the dominant-axis rule. That was verified the same day, on the ground. Both halves are now confirmed. See [`tests/README.md`](../tests/README.md).
 
 上表五行的引脚组合均已在 30% PWM 下实测通过。前进、后退、停止于 2026 年 8 月 10 日验证，原地左右转在其后的一次驾驶中验证。
 
-需要区分的是：转向行已验证的是**引脚组合**——这四个方向输入确实让小车按预期原地转。至于"摇杆的哪个区域触发转向"是另一回事，8 月 16 日已从"水平轴绝对优先"改为"主导轴优先"。
+转向行需要分两件事确认。一是**引脚组合**——这四个方向输入确实让小车按预期原地转，已在 8 月 10 日之后的驾驶中验证。二是**摇杆的哪个区域触发转向**，8 月 16 日从"水平轴绝对优先"改为"主导轴优先"，并于当天在地面上验证。两部分现均已确认。
