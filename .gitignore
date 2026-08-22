@@ -25,3 +25,6 @@ logs/
 
 # Raw sensor or encoder dumps produced during testing
 data/raw/
+
+# 激光模组抓包数据（脚本生成，不入库）
+*.bin

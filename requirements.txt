@@ -20,3 +20,4 @@ lgpio>=0.2
 # Not a Python package: `jstest` comes from the `joystick` apt package and is
 # used only for independent controller inspection. Remember that jstest and
 # evdev report different numeric scales for the same stick.
+pyserial
